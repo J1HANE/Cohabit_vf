@@ -51,9 +51,31 @@ public class ExpenseController {
         }
     }
 
+    @PostMapping("/{id}/settle")
+    public ResponseEntity<?> settleExpense(@PathVariable Long id, @RequestBody java.util.Map<String, Object> payload) {
+        try {
+            Long userId = null;
+            if (payload.get("userId") != null) {
+                userId = Long.valueOf(payload.get("userId").toString());
+            }
+            java.math.BigDecimal amount = null;
+            if (payload.get("amount") != null) {
+                amount = new java.math.BigDecimal(payload.get("amount").toString());
+            }
+            if (userId == null || amount == null || amount.compareTo(java.math.BigDecimal.ZERO) <= 0) {
+                return ResponseEntity.badRequest().body(java.util.Map.of("error", "Valid userId and amount are required"));
+            }
+            Expense updated = expenseService.settleExpenseShare(id, userId, amount);
+            return ResponseEntity.ok(updated);
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(java.util.Map.of("error", e.getMessage()));
+        }
+    }
+
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteExpense(@PathVariable Long id) {
         expenseService.deleteExpense(id);
         return ResponseEntity.noContent().build();
     }
 }
+

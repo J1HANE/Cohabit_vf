@@ -1,12 +1,16 @@
 import React, { useState } from 'react';
 import { PageHeader, AppButton, ShoppingItem, EmptyState } from '../../components/shared/SharedComponents';
-import { MOCK_SHOPPING, getMemberById } from '../../data/mockData';
+import { useHousehold } from '../../context/HouseholdContext';
+import { useAuth } from '../../context/AuthContext';
+import { MOCK_SHOPPING } from '../../data/mockData';
 import './Shopping.css';
 
 export default function Shopping() {
+  const { user } = useAuth();
+  const { household, getMemberById } = useHousehold();
   const [items, setItems] = useState(MOCK_SHOPPING);
   const [newItem, setNewItem] = useState('');
-  const currentUserId = 1;
+  const currentUserId = user?.id || 1;
 
   const toggleItem = (id) => {
     setItems((prev) =>
@@ -23,7 +27,7 @@ export default function Shopping() {
     if (!newItem.trim()) return;
     const item = {
       id: Date.now(),
-      household_id: 1,
+      household_id: household?.id || 1,
       name: newItem.trim(),
       purchased: false,
       added_by: currentUserId,

@@ -16,11 +16,7 @@ export const MOCK_HOUSEHOLD = {
   created_at: '2026-09-01T00:00:00Z',
 };
 
-export const MOCK_MEMBERS = [
-  { id: 1, name: 'Jihane', email: 'jihane@example.com', color: '#a8d5c4', household_id: 1 },
-  { id: 2, name: 'Sarah', email: 'sarah@example.com', color: '#6b9fd4', household_id: 1 },
-  { id: 3, name: 'Adam', email: 'adam@example.com', color: '#d4a26b', household_id: 1 },
-];
+export const MOCK_MEMBERS = [];
 
 export const MOCK_EXPENSES = [
   {
@@ -171,35 +167,54 @@ export const MOCK_SETTLEMENTS = [
   },
 ];
 
-// Helper: get member by id
-export const getMemberById = (id) => MOCK_MEMBERS.find((m) => m.id === id);
+// Helper: get member by id (fallback)
+export const getMemberById = (id) => null;
 
 // Helper: format date
 export const formatDate = (dateStr) => {
+  if (!dateStr) return '';
   const d = new Date(dateStr);
   return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
 };
 
 // Helper: calculate balances
-export const calculateBalances = (expenses, settlements, userId) => {
+export const calculateBalances = (expenses = [], settlements = [], userId, members = []) => {
   const balances = {};
-  MOCK_MEMBERS.forEach((m) => { balances[m.id] = 0; });
+  (members || []).forEach((m) => {
+    balances[m.id] = 0;
+  });
 
-  expenses.forEach((exp) => {
-    // Payer gets credited
-    exp.shares.forEach((share) => {
-      if (share.user_id !== exp.payer_id) {
-        balances[exp.payer_id] = (balances[exp.payer_id] || 0) + share.share_amount;
-        balances[share.user_id] = (balances[share.user_id] || 0) - share.share_amount;
+  (expenses || []).forEach((exp) => {
+    const payerId = exp.payerId || exp.payer_id;
+    if (payerId && balances[payerId] === undefined) balances[payerId] = 0;
+
+    (exp.shares || []).forEach((share) => {
+      const shareUserId = share.userId || share.user_id;
+      const shareAmount = Number(share.shareAmount || share.share_amount || 0);
+
+      if (shareUserId && balances[shareUserId] === undefined) balances[shareUserId] = 0;
+
+      if (shareUserId !== payerId) {
+        const paid = Number(share.paidAmount || share.paid_amount || 0);
+        const remainingShare = Math.max(0, shareAmount - paid);
+        balances[payerId] = (balances[payerId] || 0) + remainingShare;
+        balances[shareUserId] = (balances[shareUserId] || 0) - remainingShare;
       }
     });
   });
 
   // Apply settlements
-  settlements.forEach((s) => {
-    balances[s.from_user_id] = (balances[s.from_user_id] || 0) + s.amount;
-    balances[s.to_user_id] = (balances[s.to_user_id] || 0) - s.amount;
+  (settlements || []).forEach((s) => {
+    const fromId = s.fromUserId || s.from_user_id;
+    const toId = s.toUserId || s.to_user_id;
+    const amount = Number(s.amount || 0);
+    if (fromId && balances[fromId] === undefined) balances[fromId] = 0;
+    if (toId && balances[toId] === undefined) balances[toId] = 0;
+
+    balances[fromId] = (balances[fromId] || 0) + amount;
+    balances[toId] = (balances[toId] || 0) - amount;
   });
 
   return balances;
 };
+

@@ -1,11 +1,13 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { PageHeader, AppButton } from '../../components/shared/SharedComponents';
-import { MOCK_MEMBERS, MOCK_SETTLEMENTS, getMemberById } from '../../data/mockData';
+import { useHousehold } from '../../context/HouseholdContext';
+import { MOCK_SETTLEMENTS } from '../../data/mockData';
 import './Settlements.css';
 
 export default function Settlements() {
   const navigate = useNavigate();
+  const { getMemberById } = useHousehold();
 
   return (
     <div className="settlements-page page-fade">
@@ -41,7 +43,7 @@ export default function Settlements() {
                 <div className="settlement-icon">💸</div>
                 <div className="settlement-info">
                   <span className="settlement-names">
-                    <strong>{from?.name}</strong> paid <strong>{to?.name}</strong>
+                    <strong>{from?.name || 'User'}</strong> paid <strong>{to?.name || 'User'}</strong>
                   </span>
                   <span className="settlement-date">
                     {new Date(s.settled_at).toLocaleDateString('en-GB', {
@@ -58,3 +60,4 @@ export default function Settlements() {
     </div>
   );
 }
+

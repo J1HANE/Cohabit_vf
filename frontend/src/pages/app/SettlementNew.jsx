@@ -1,17 +1,33 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { PageHeader, AppButton } from '../../components/shared/SharedComponents';
-import { MOCK_MEMBERS } from '../../data/mockData';
+import { useHousehold } from '../../context/HouseholdContext';
+import { useAuth } from '../../context/AuthContext';
 import './Settlements.css';
 
 export default function SettlementNew() {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const { members } = useHousehold();
   const [form, setForm] = useState({
-    from_user_id: MOCK_MEMBERS[0].id,
-    to_user_id: MOCK_MEMBERS[1].id,
+    from_user_id: user?.id || (members[0]?.id || ''),
+    to_user_id: members.find((m) => m.id !== user?.id)?.id || (members[1]?.id || ''),
     amount: '',
   });
   const [success, setSuccess] = useState(false);
+
+  useEffect(() => {
+    if (members.length > 0) {
+      setForm((prev) => ({
+        ...prev,
+        from_user_id: prev.from_user_id || user?.id || members[0].id,
+        to_user_id:
+          prev.to_user_id ||
+          members.find((m) => m.id !== (user?.id || members[0]?.id))?.id ||
+          members[0].id,
+      }));
+    }
+  }, [members, user]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -49,7 +65,7 @@ export default function SettlementNew() {
                 value={form.from_user_id}
                 onChange={(e) => setForm((f) => ({ ...f, from_user_id: parseInt(e.target.value) }))}
               >
-                {MOCK_MEMBERS.map((m) => (
+                {members.map((m) => (
                   <option key={m.id} value={m.id}>{m.name}</option>
                 ))}
               </select>
@@ -64,7 +80,7 @@ export default function SettlementNew() {
                 value={form.to_user_id}
                 onChange={(e) => setForm((f) => ({ ...f, to_user_id: parseInt(e.target.value) }))}
               >
-                {MOCK_MEMBERS.filter((m) => m.id !== form.from_user_id).map((m) => (
+                {members.filter((m) => m.id !== form.from_user_id).map((m) => (
                   <option key={m.id} value={m.id}>{m.name}</option>
                 ))}
               </select>
@@ -93,3 +109,4 @@ export default function SettlementNew() {
     </div>
   );
 }
+

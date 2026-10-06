@@ -23,8 +23,9 @@ export default function AppLayout() {
     return <Navigate to="/login" replace />;
   }
 
-  // If user has no household, only allow household setup routes
-  // This check is flexible — pages can handle it themselves too
+  if (!user.householdId && !user.household_id && !household?.id) {
+    return <Navigate to="/household/join" replace />;
+  }
 
   return (
     <div className="app-layout">

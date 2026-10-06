@@ -113,6 +113,42 @@ public class HouseholdController {
         return ResponseEntity.ok(response);
     }
 
+    @PostMapping("/leave")
+    public ResponseEntity<?> leaveHousehold(@RequestBody Map<String, Object> payload) {
+        Long userId = toLong(payload.get("userId"));
+        if (userId == null) {
+            return ResponseEntity.badRequest().body(Map.of("error", "userId is required"));
+        }
+
+        User user = userRepository.findById(userId).orElse(null);
+        if (user == null) {
+            return ResponseEntity.badRequest().body(Map.of("error", "User not found"));
+        }
+
+        user.setHouseholdId(null);
+        userRepository.save(user);
+
+        return ResponseEntity.ok(Map.of("message", "Successfully left household"));
+    }
+
+    @PostMapping("/{householdId}/regenerate-code")
+    public ResponseEntity<?> regenerateInviteCode(@PathVariable Long householdId, @RequestBody(required = false) Map<String, Object> payload) {
+        Household household = householdRepository.findById(householdId).orElse(null);
+        if (household == null) {
+            return ResponseEntity.notFound().build();
+        }
+
+        String newCode = generateUniqueInviteCode();
+        household.setInviteCode(newCode);
+        household = householdRepository.save(household);
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("household", toHouseholdMap(household));
+        response.put("inviteCode", newCode);
+        response.put("message", "New invitation code generated successfully");
+        return ResponseEntity.ok(response);
+    }
+
     private String generateUniqueInviteCode() {
         for (int attempt = 0; attempt < 20; attempt++) {
             String code = randomInviteCode(6);

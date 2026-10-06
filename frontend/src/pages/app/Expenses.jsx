@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { useHousehold } from '../../context/HouseholdContext';
 import {
   PageHeader,
   AppButton,
@@ -8,7 +9,6 @@ import {
   EmptyState,
   SummaryCard,
 } from '../../components/shared/SharedComponents';
-import { MOCK_MEMBERS, getMemberById } from '../../data/mockData';
 import './Expenses.css';
 
 const FILTERS = ['All', 'Mine', 'This month', 'Last month'];
@@ -16,27 +16,39 @@ const FILTERS = ['All', 'Mine', 'This month', 'Last month'];
 export default function Expenses() {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { household, getMemberById } = useHousehold();
   const [activeFilter, setActiveFilter] = useState('All');
   const [expenses, setExpenses] = useState([]);
-  const currentUserId = user?.id || 1;
+  const currentUserId = user?.id;
 
   useEffect(() => {
-    fetch('http://localhost:8081/api/expenses')
+    const householdId = household?.id || user?.householdId || user?.household_id;
+    const url = householdId
+      ? `http://localhost:8081/api/expenses/household/${householdId}`
+      : 'http://localhost:8081/api/expenses';
+
+    fetch(url)
       .then(async (res) => {
         const data = await res.json();
         if (!res.ok || !Array.isArray(data)) {
           throw new Error(data?.message || 'Failed to fetch expenses');
         }
-        const mappedData = data.map(e => ({
+        const mappedData = data.map((e) => ({
           ...e,
-          expense_date: e.expenseDate,
-          payer_id: e.payerId,
-          household_id: e.householdId,
+          expense_date: e.expenseDate || e.expense_date,
+          payer_id: e.payerId || e.payer_id,
+          household_id: e.householdId || e.household_id,
+          shares: (e.shares || []).map((s) => ({
+            id: s.id,
+            user_id: s.userId || s.user_id,
+            share_amount: Number(s.shareAmount || s.share_amount || 0),
+            paid_amount: Number(s.paidAmount || s.paid_amount || 0),
+          })),
         }));
         setExpenses(mappedData);
       })
-      .catch(err => console.error("Failed to fetch expenses", err));
-  }, []);
+      .catch((err) => console.error('Failed to fetch expenses', err));
+  }, [household?.id, user]);
 
   const now = new Date();
   const currentMonth = now.getMonth();
@@ -44,7 +56,7 @@ export default function Expenses() {
 
   const filteredExpenses = expenses.filter((exp) => {
     const d = new Date(exp.expense_date);
-    if (activeFilter === 'Mine') return exp.payer_id === currentUserId;
+    if (activeFilter === 'Mine') return Number(exp.payer_id) === Number(currentUserId);
     if (activeFilter === 'This month')
       return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
     if (activeFilter === 'Last month') {
@@ -55,11 +67,13 @@ export default function Expenses() {
     return true;
   });
 
-  const totalSpend = expenses.reduce((sum, e) => sum + e.amount, 0);
-  const monthSpend = expenses.filter((exp) => {
-    const d = new Date(exp.expense_date);
-    return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
-  }).reduce((sum, e) => sum + e.amount, 0);
+  const totalSpend = expenses.reduce((sum, e) => sum + (Number(e.amount) || 0), 0);
+  const monthSpend = expenses
+    .filter((exp) => {
+      const d = new Date(exp.expense_date);
+      return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
+    })
+    .reduce((sum, e) => sum + (Number(e.amount) || 0), 0);
 
   return (
     <div className="expenses-page page-fade">
@@ -83,13 +97,13 @@ export default function Expenses() {
         <SummaryCard
           icon="💰"
           label="Total Spending"
-          value={`${totalSpend} MAD`}
+          value={`${totalSpend.toFixed(2)} MAD`}
           sub="All time"
         />
         <SummaryCard
           icon="📅"
           label="This Month"
-          value={`${monthSpend} MAD`}
+          value={`${monthSpend.toFixed(2)} MAD`}
           sub={now.toLocaleDateString('en-GB', { month: 'long', year: 'numeric' })}
         />
         <SummaryCard
@@ -145,3 +159,4 @@ export default function Expenses() {
     </div>
   );
 }
+

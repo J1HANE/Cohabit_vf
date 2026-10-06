@@ -7,23 +7,19 @@ import {
   ExpenseCard,
   TaskCard,
   ShoppingItem,
-  PageHeader,
   AppButton,
   EmptyState,
 } from '../../components/shared/SharedComponents';
 import {
-  MOCK_EXPENSES,
   MOCK_SHOPPING,
-  MOCK_MEMBERS,
   calculateBalances,
   MOCK_SETTLEMENTS,
-  getMemberById,
 } from '../../data/mockData';
 import './Dashboard.css';
 
 export default function Dashboard() {
   const { user } = useAuth();
-  const { household } = useHousehold();
+  const { household, members, getMemberById } = useHousehold();
   const navigate = useNavigate();
 
   const [shopping, setShopping] = useState(MOCK_SHOPPING);
@@ -37,47 +33,62 @@ export default function Dashboard() {
         if (!res.ok || !Array.isArray(data)) {
           throw new Error(data?.message || 'Failed to fetch tasks');
         }
-        const mappedData = data.map(t => ({
+        const mappedData = data.map((t) => ({
           ...t,
-          due_date: t.dueDate,
+          due_date: t.dueDate || t.due_date,
           status: t.status,
-          assigned_user_id: t.assignedUserId,
+          assigned_user_id: t.assignedUserId || t.assigned_user_id,
         }));
         setTasks(mappedData);
       })
-      .catch(err => console.error("Failed to fetch tasks in dashboard", err));
+      .catch((err) => console.error('Failed to fetch tasks in dashboard', err));
 
-    fetch('http://localhost:8081/api/expenses')
+    const householdId = household?.id || user?.householdId || user?.household_id;
+    const expenseUrl = householdId
+      ? `http://localhost:8081/api/expenses/household/${householdId}`
+      : 'http://localhost:8081/api/expenses';
+
+    fetch(expenseUrl)
       .then(async (res) => {
         const data = await res.json();
         if (!res.ok || !Array.isArray(data)) {
           throw new Error(data?.message || 'Failed to fetch expenses');
         }
-        const mappedData = data.map(e => ({
+        const mappedData = data.map((e) => ({
           ...e,
-          expense_date: e.expenseDate,
-          payer_id: e.payerId,
-          household_id: e.householdId,
+          expense_date: e.expenseDate || e.expense_date,
+          payer_id: e.payerId || e.payer_id,
+          household_id: e.householdId || e.household_id,
+          shares: (e.shares || []).map((s) => ({
+            id: s.id,
+            user_id: s.userId || s.user_id,
+            share_amount: Number(s.shareAmount || s.share_amount || 0),
+            paid_amount: Number(s.paidAmount || s.paid_amount || 0),
+          })),
         }));
         setExpenses(mappedData);
       })
-      .catch(err => console.error("Failed to fetch expenses in dashboard", err));
-  }, []);
+      .catch((err) => console.error('Failed to fetch expenses in dashboard', err));
+  }, [household?.id, user]);
 
   const hour = new Date().getHours();
   const greeting =
     hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
 
-  const balances = calculateBalances(expenses, MOCK_SETTLEMENTS, user?.id);
+  const balances = calculateBalances(expenses, MOCK_SETTLEMENTS, user?.id, members);
   const myBalance = balances[user?.id || 1] || 0;
 
-  const totalExpenses = expenses.reduce((sum, e) => sum + e.amount, 0);
+  const totalExpenses = expenses.reduce((sum, e) => sum + (Number(e.amount) || 0), 0);
   const pendingTasks = tasks.filter((t) => t.status === 'pending').length;
   const shoppingPending = shopping.filter((s) => !s.purchased).length;
 
   const todayTasks = tasks.filter(
-    (t) => t.status === 'pending' && new Date(t.due_date).toDateString() === new Date().toDateString()
+    (t) =>
+      t.status === 'pending' &&
+      t.due_date &&
+      new Date(t.due_date).toDateString() === new Date().toDateString()
   );
+
   const recentExpenses = expenses.slice(0, 3);
   const shoppingPreview = shopping.slice(0, 4);
 
@@ -105,7 +116,7 @@ export default function Dashboard() {
           </h1>
           {household && (
             <p className="greeting-sub">
-              🏡 {household.name} &bull; {MOCK_MEMBERS.length} members
+              🏡 {household.name} &bull; {members.length} member{members.length !== 1 ? 's' : ''}
             </p>
           )}
         </div>
@@ -267,23 +278,29 @@ export default function Dashboard() {
               </AppButton>
             </div>
             <div className="app-card">
-              {MOCK_MEMBERS.map((member) => {
-                const bal = balances[member.id] || 0;
-                return (
-                  <div key={member.id} className="dash-balance-row">
-                    <div
-                      className="dash-balance-dot"
-                      style={{ background: member.color }}
-                    />
-                    <span className="dash-balance-name">{member.name}</span>
-                    <span
-                      className={`dash-balance-amount ${bal >= 0 ? 'positive' : 'negative'}`}
-                    >
-                      {bal > 0 ? '+' : ''}{bal} MAD
-                    </span>
-                  </div>
-                );
-              })}
+              {members.length === 0 ? (
+                <div style={{ color: 'rgba(255,255,255,0.4)', textAlign: 'center', padding: '1rem' }}>
+                  No members found
+                </div>
+              ) : (
+                members.map((member) => {
+                  const bal = balances[member.id] || 0;
+                  return (
+                    <div key={member.id} className="dash-balance-row">
+                      <div
+                        className="dash-balance-dot"
+                        style={{ background: member.color || '#a8d5c4' }}
+                      />
+                      <span className="dash-balance-name">{member.name}</span>
+                      <span
+                        className={`dash-balance-amount ${bal >= 0 ? 'positive' : 'negative'}`}
+                      >
+                        {bal > 0 ? '+' : ''}{bal.toFixed(2)} MAD
+                      </span>
+                    </div>
+                  );
+                })
+              )}
             </div>
           </div>
         </div>

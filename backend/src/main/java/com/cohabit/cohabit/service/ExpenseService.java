@@ -37,7 +37,35 @@ public class ExpenseService {
     @Transactional
     public Expense createExpense(Expense expense) {
         if (expense.getShares() != null) {
-            expense.getShares().forEach(share -> share.setExpense(expense));
+            expense.getShares().forEach(share -> {
+                share.setExpense(expense);
+                if (share.getUserId() != null && share.getUserId().equals(expense.getPayerId())) {
+                    share.setPaidAmount(share.getShareAmount());
+                } else if (share.getPaidAmount() == null) {
+                    share.setPaidAmount(java.math.BigDecimal.ZERO);
+                }
+            });
+        }
+        return expenseRepository.save(expense);
+    }
+
+    @Transactional
+    public Expense settleExpenseShare(Long expenseId, Long userId, java.math.BigDecimal amount) {
+        Expense expense = expenseRepository.findByIdWithShares(expenseId)
+                .orElseThrow(() -> new RuntimeException("Expense not found with id " + expenseId));
+
+        if (expense.getShares() != null) {
+            for (com.cohabit.cohabit.entity.ExpenseShare share : expense.getShares()) {
+                if (share.getUserId() != null && share.getUserId().equals(userId)) {
+                    java.math.BigDecimal currentPaid = share.getPaidAmount() != null ? share.getPaidAmount() : java.math.BigDecimal.ZERO;
+                    java.math.BigDecimal newPaid = currentPaid.add(amount != null ? amount : java.math.BigDecimal.ZERO);
+                    if (share.getShareAmount() != null && newPaid.compareTo(share.getShareAmount()) > 0) {
+                        newPaid = share.getShareAmount();
+                    }
+                    share.setPaidAmount(newPaid);
+                    break;
+                }
+            }
         }
         return expenseRepository.save(expense);
     }

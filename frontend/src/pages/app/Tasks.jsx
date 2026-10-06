@@ -1,20 +1,22 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useHousehold } from '../../context/HouseholdContext';
 import {
   PageHeader,
   AppButton,
   TaskCard,
   EmptyState,
 } from '../../components/shared/SharedComponents';
-import { getMemberById } from '../../data/mockData';
 import './Tasks.css';
 
 const TABS = ['Today', 'Upcoming', 'Completed'];
 
 export default function Tasks() {
   const navigate = useNavigate();
+  const { household, getMemberById } = useHousehold();
   const [tasks, setTasks] = useState([]);
   const [activeTab, setActiveTab] = useState('Today');
+
 
   useEffect(() => {
     fetch('http://localhost:8081/api/tasks')

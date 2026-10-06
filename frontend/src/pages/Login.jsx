@@ -45,7 +45,7 @@ export default function Login() {
           navigate('/dashboard');
         } else {
           clearHousehold();
-          navigate('/household/create');
+          navigate('/household/join');
         }
       } else {
         setError(data.error || 'Email ou mot de passe incorrect.');

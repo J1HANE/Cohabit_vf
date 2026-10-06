@@ -8,21 +8,23 @@ import {
 } from '../../components/shared/SharedComponents';
 import { useHousehold } from '../../context/HouseholdContext';
 import { useAuth } from '../../context/AuthContext';
-import { MOCK_MEMBERS, MOCK_HOUSEHOLD } from '../../data/mockData';
 import './HouseholdSettings.css';
 
 export default function HouseholdSettings() {
   const navigate = useNavigate();
-  const { household, clearHousehold } = useHousehold();
-  const { logout } = useAuth();
+  const { household, members, setHouseholdData, clearHousehold } = useHousehold();
+  const { user, logout } = useAuth();
   const [householdName, setHouseholdName] = useState(
-    household?.name || MOCK_HOUSEHOLD.name
+    household?.name || ''
   );
   const [copied, setCopied] = useState(false);
   const [showLeaveModal, setShowLeaveModal] = useState(false);
+  const [showRevokeModal, setShowRevokeModal] = useState(false);
+  const [regenerating, setRegenerating] = useState(false);
+  const [revokeSuccess, setRevokeSuccess] = useState('');
   const [nameSaved, setNameSaved] = useState(false);
 
-  const inviteCode = household?.invite_code || MOCK_HOUSEHOLD.invite_code;
+  const inviteCode = household?.invite_code || household?.inviteCode || '';
 
   const copyCode = () => {
     navigator.clipboard.writeText(inviteCode).catch(() => {});
@@ -37,7 +39,43 @@ export default function HouseholdSettings() {
     setTimeout(() => setNameSaved(false), 2000);
   };
 
-  const handleLeave = () => {
+  const handleRegenerateCode = async () => {
+    if (!household?.id) return;
+    setRegenerating(true);
+    try {
+      const res = await fetch(`http://localhost:8081/api/households/${household.id}/regenerate-code`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      });
+      const data = await res.json();
+      if (res.ok && data.household) {
+        setHouseholdData(data.household, members);
+        setShowRevokeModal(false);
+        setRevokeSuccess('Nouveau code généré avec succès ! L\'ancien code est désormais annulé.');
+        setTimeout(() => setRevokeSuccess(''), 4500);
+      } else {
+        alert(data.error || 'Erreur lors de la régénération du code');
+      }
+    } catch (err) {
+      console.error('Failed to regenerate invite code', err);
+      alert('Erreur lors de la régénération du code');
+    } finally {
+      setRegenerating(false);
+    }
+  };
+
+  const handleLeave = async () => {
+    try {
+      if (user?.id) {
+        await fetch('http://localhost:8081/api/households/leave', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId: user.id }),
+        });
+      }
+    } catch (err) {
+      console.error('Failed to leave household on backend', err);
+    }
     clearHousehold();
     logout();
     navigate('/login');
@@ -49,6 +87,12 @@ export default function HouseholdSettings() {
         title="Household Settings"
         subtitle="Manage your shared home"
       />
+
+      {revokeSuccess && (
+        <div className="settle-success-toast" style={{ marginBottom: '1.5rem' }}>
+          {revokeSuccess}
+        </div>
+      )}
 
       {/* Household name */}
       <div className="app-card hs-card">
@@ -73,15 +117,19 @@ export default function HouseholdSettings() {
       <div className="app-card hs-card">
         <h3 className="profile-section-title">Members</h3>
         <div className="members-list">
-          {MOCK_MEMBERS.map((member) => (
-            <div key={member.id} className="member-row">
-              <HouseholdMemberAvatar member={member} size="md" />
-              <div className="member-row-info">
-                <span className="member-row-name">{member.name}</span>
-                <span className="member-row-email">{member.email}</span>
+          {members.length === 0 ? (
+            <p style={{ color: 'rgba(255,255,255,0.4)' }}>No members found</p>
+          ) : (
+            members.map((member) => (
+              <div key={member.id} className="member-row">
+                <HouseholdMemberAvatar member={member} size="md" />
+                <div className="member-row-info">
+                  <span className="member-row-name">{member.name}</span>
+                  <span className="member-row-email">{member.email}</span>
+                </div>
               </div>
-            </div>
-          ))}
+            ))
+          )}
         </div>
       </div>
 
@@ -89,20 +137,29 @@ export default function HouseholdSettings() {
       <div className="app-card hs-card">
         <h3 className="profile-section-title">Invite Roommates</h3>
         <p className="hs-invite-desc">
-          Share this code with your roommates to let them join your household.
+          Partagez ce code avec vos colocataires pour leur permettre de rejoindre votre foyer.
         </p>
         <div className="invite-code-row">
           <div className="invite-code-display">
             <span className="invite-code-label">Invitation Code</span>
             <span className="invite-code-value">{inviteCode}</span>
           </div>
-          <AppButton
-            variant={copied ? 'accent' : 'ghost'}
-            size="md"
-            onClick={copyCode}
-          >
-            {copied ? '✓ Copied!' : 'Copy code'}
-          </AppButton>
+          <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+            <AppButton
+              variant={copied ? 'accent' : 'ghost'}
+              size="md"
+              onClick={copyCode}
+            >
+              {copied ? '✓ Copied!' : 'Copy code'}
+            </AppButton>
+            <AppButton
+              variant="warning"
+              size="md"
+              onClick={() => setShowRevokeModal(true)}
+            >
+              Régénérer / Révoquer
+            </AppButton>
+          </div>
         </div>
       </div>
 
@@ -120,6 +177,37 @@ export default function HouseholdSettings() {
           Leave household
         </AppButton>
       </div>
+
+      {/* Revoke code confirmation modal */}
+      <Modal
+        isOpen={showRevokeModal}
+        onClose={() => !regenerating && setShowRevokeModal(false)}
+        title="Révocation du code d'invitation"
+      >
+        <p style={{ color: 'rgba(255,255,255,0.75)', fontSize: '0.9rem', marginBottom: '1.5rem', lineHeight: 1.6 }}>
+          Êtes-vous sûr de vouloir révoquer ce code ? Un nouveau code sera généré et <strong style={{ color: '#ff6b6b' }}>l'ancien code sera instantanément annulé</strong> (utile si le code a été partagé par erreur).
+        </p>
+        <div style={{ display: 'flex', gap: '0.75rem' }}>
+          <AppButton
+            variant="ghost"
+            size="md"
+            onClick={() => setShowRevokeModal(false)}
+            disabled={regenerating}
+            fullWidth
+          >
+            Annuler
+          </AppButton>
+          <AppButton
+            variant="primary"
+            size="md"
+            onClick={handleRegenerateCode}
+            disabled={regenerating}
+            fullWidth
+          >
+            {regenerating ? 'Génération...' : 'Générer un nouveau code'}
+          </AppButton>
+        </div>
+      </Modal>
 
       {/* Leave confirmation modal */}
       <Modal
@@ -152,3 +240,4 @@ export default function HouseholdSettings() {
     </div>
   );
 }
+

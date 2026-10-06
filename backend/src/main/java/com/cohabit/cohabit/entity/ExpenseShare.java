@@ -23,6 +23,9 @@ public class ExpenseShare {
     @Column(name = "share_amount")
     private BigDecimal shareAmount;
 
+    @Column(name = "paid_amount")
+    private BigDecimal paidAmount = BigDecimal.ZERO;
+
     public ExpenseShare() {}
 
     public Long getId() { return id; }
@@ -36,4 +39,8 @@ public class ExpenseShare {
 
     public BigDecimal getShareAmount() { return shareAmount; }
     public void setShareAmount(BigDecimal shareAmount) { this.shareAmount = shareAmount; }
+
+    public BigDecimal getPaidAmount() { return paidAmount; }
+    public void setPaidAmount(BigDecimal paidAmount) { this.paidAmount = paidAmount; }
 }
+

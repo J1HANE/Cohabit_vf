@@ -85,7 +85,7 @@ export default function Home() {
                 <span className="card-badge">Ce mois-ci</span>
                 <span className="card-title">Équilibre de la coloc</span>
               </div>
-              <h3 className="card-subtitle">Vous devez 35 € à Léo</h3>
+              <h3 className="card-subtitle">Vous devez 5000dh à Jihane </h3>
               <p className="card-location">Courses de la semaine</p>
               
               <div className="avatars">
