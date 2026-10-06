@@ -1,0 +1,19 @@
+.tasks-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.tab-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  background: rgba(168, 213, 196, 0.25);
+  color: #a8d5c4;
+  border-radius: 50%;
+  font-size: 0.65rem;
+  font-weight: 700;
+  margin-left: 0.35rem;
+}

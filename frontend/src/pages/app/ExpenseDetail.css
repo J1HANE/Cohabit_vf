@@ -1,0 +1,116 @@
+.expense-detail-card {
+  max-width: 560px;
+}
+
+.expense-detail-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.expense-detail-emoji {
+  font-size: 2rem;
+  width: 56px;
+  height: 56px;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.expense-detail-label {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #fff;
+}
+
+.expense-detail-date {
+  font-size: 0.82rem;
+  color: rgba(255, 255, 255, 0.45);
+  margin-top: 0.2rem;
+}
+
+.expense-detail-total {
+  margin-left: auto;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #a8d5c4;
+}
+
+.expense-detail-section {
+  margin-bottom: 1.5rem;
+}
+
+.expense-detail-section-label {
+  display: block;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: rgba(255, 255, 255, 0.4);
+  font-weight: 600;
+  margin-bottom: 0.75rem;
+}
+
+.expense-detail-payer {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.expense-detail-payer-name {
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: #fff;
+}
+
+.expense-shares-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.expense-share-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.85rem 1rem;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 14px;
+}
+
+.expense-share-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.expense-share-name {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #fff;
+}
+
+.expense-share-status {
+  font-size: 0.78rem;
+}
+
+.expense-share-amount {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.expense-detail-actions {
+  padding-top: 1rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
+  display: flex;
+  gap: 0.75rem;
+}

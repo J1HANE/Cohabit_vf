@@ -1,0 +1,200 @@
+.sidebar {
+  width: 240px;
+  min-height: 100vh;
+  background: #080f16;
+  border-right: 1px solid rgba(255, 255, 255, 0.07);
+  display: flex;
+  flex-direction: column;
+  padding: 1.5rem 1rem;
+  position: sticky;
+  top: 0;
+  flex-shrink: 0;
+  transition: width 0.3s ease;
+}
+
+.sidebar-logo {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.5rem 0.75rem;
+  margin-bottom: 1.5rem;
+}
+
+.sidebar-logo-icon {
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  background: linear-gradient(135deg, #ffffff, #a8d5c4);
+  flex-shrink: 0;
+}
+
+.sidebar-brand {
+  font-size: 1.1rem;
+  font-weight: 600;
+  letter-spacing: -0.5px;
+  color: #fff;
+}
+
+.sidebar-household {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  background: rgba(168, 213, 196, 0.08);
+  border: 1px solid rgba(168, 213, 196, 0.15);
+  border-radius: 12px;
+  padding: 0.65rem 0.75rem;
+  margin-bottom: 1.5rem;
+}
+
+.household-icon {
+  font-size: 1rem;
+}
+
+.household-info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.household-name {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #a8d5c4;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  flex: 1;
+}
+
+.sidebar-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.7rem 0.75rem;
+  border-radius: 12px;
+  color: rgba(255, 255, 255, 0.55);
+  text-decoration: none;
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.sidebar-nav-item:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.sidebar-nav-item.active {
+  background: rgba(168, 213, 196, 0.12);
+  color: #a8d5c4;
+}
+
+.nav-item-icon {
+  font-size: 1.1rem;
+  flex-shrink: 0;
+  width: 22px;
+  text-align: center;
+}
+
+.nav-item-label {
+  font-size: 0.875rem;
+}
+
+.sidebar-bottom {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
+  padding-top: 1rem;
+  margin-top: 1rem;
+}
+
+.avatar-mini {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: #0a1118;
+  flex-shrink: 0;
+}
+
+.sidebar-logout {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.7rem 0.75rem;
+  border-radius: 12px;
+  color: rgba(255, 107, 107, 0.7);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-family: var(--font-family);
+  font-size: 0.875rem;
+  font-weight: 500;
+  width: 100%;
+  text-align: left;
+  transition: all 0.2s ease;
+}
+
+.sidebar-logout:hover {
+  background: rgba(255, 107, 107, 0.1);
+  color: #ff6b6b;
+}
+
+/* Tablet compact sidebar */
+@media (max-width: 1024px) {
+  .sidebar {
+    width: 64px;
+  }
+
+  .sidebar-brand,
+  .nav-item-label,
+  .household-name,
+  .household-info {
+    display: none;
+  }
+
+  .sidebar-logo {
+    justify-content: center;
+    padding: 0.5rem;
+  }
+
+  .sidebar-household {
+    justify-content: center;
+    padding: 0.65rem;
+  }
+
+  .household-icon {
+    font-size: 1.2rem;
+  }
+
+  .sidebar-nav-item {
+    justify-content: center;
+    padding: 0.7rem;
+  }
+
+  .nav-item-icon,
+  .avatar-mini {
+    width: auto;
+  }
+
+  .sidebar-logout {
+    justify-content: center;
+    padding: 0.7rem;
+  }
+
+  .sidebar-logout .nav-item-icon {
+    margin: 0;
+  }
+}

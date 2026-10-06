@@ -1,0 +1,103 @@
+.hs-card {
+  max-width: 560px;
+  margin-bottom: 1.5rem;
+}
+
+.members-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.member-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.75rem;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.member-row-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.member-row-name {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #fff;
+}
+
+.member-row-email {
+  font-size: 0.78rem;
+  color: rgba(255, 255, 255, 0.45);
+}
+
+/* Invite code */
+.hs-invite-desc {
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.5);
+  margin-bottom: 1rem;
+  line-height: 1.5;
+}
+
+.invite-code-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.invite-code-display {
+  flex: 1;
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 14px;
+  padding: 0.9rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.invite-code-label {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: rgba(255, 255, 255, 0.4);
+  font-weight: 600;
+}
+
+.invite-code-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: 4px;
+  color: #a8d5c4;
+  font-family: monospace;
+}
+
+/* Danger zone */
+.hs-danger-zone {
+  border-color: rgba(255, 107, 107, 0.2);
+  background: rgba(255, 107, 107, 0.03);
+}
+
+.hs-danger-title {
+  color: #ff6b6b;
+}
+
+.hs-danger-desc {
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.5);
+  margin-bottom: 1rem;
+  line-height: 1.5;
+}
+
+.profile-section-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #fff;
+  margin-bottom: 1.25rem;
+}

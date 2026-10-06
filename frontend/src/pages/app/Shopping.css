@@ -1,0 +1,15 @@
+.shopping-add-form {
+  display: flex;
+  gap: 0.75rem;
+  margin-bottom: 2rem;
+}
+
+.shopping-add-input {
+  flex: 1;
+}
+
+.shopping-items-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}

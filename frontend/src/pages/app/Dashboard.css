@@ -1,0 +1,123 @@
+.dashboard {
+  animation: fadeInUp 0.4s ease forwards;
+}
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.dashboard-greeting {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 2rem;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.greeting-text {
+  font-size: 1.9rem;
+  font-weight: 600;
+  letter-spacing: -0.5px;
+  color: #fff;
+}
+
+.greeting-sub {
+  margin-top: 0.35rem;
+  font-size: 0.88rem;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.greeting-actions {
+  display: flex;
+  gap: 0.75rem;
+  flex-shrink: 0;
+}
+
+/* Summary grid */
+.dashboard-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+/* Two-column layout */
+.dashboard-columns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+}
+
+.dashboard-col {
+  display: flex;
+  flex-direction: column;
+}
+
+.section-items {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+/* Balance rows */
+.dash-balance-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.6rem 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.dash-balance-row:last-child {
+  border-bottom: none;
+}
+
+.dash-balance-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.dash-balance-name {
+  flex: 1;
+  font-size: 0.88rem;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.dash-balance-amount {
+  font-size: 0.88rem;
+  font-weight: 600;
+}
+
+.dash-balance-amount.positive { color: #a8d5c4; }
+.dash-balance-amount.negative { color: #ff6b6b; }
+
+@media (max-width: 1100px) {
+  .dashboard-summary-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .dashboard-summary-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .dashboard-columns {
+    grid-template-columns: 1fr;
+  }
+
+  .greeting-text {
+    font-size: 1.5rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .dashboard-summary-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+  }
+}

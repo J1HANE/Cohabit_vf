@@ -1,0 +1,104 @@
+.balances-page {}
+
+.my-balance-hero {
+  border-radius: 20px;
+  padding: 1.75rem;
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+}
+
+.my-balance-hero.positive {
+  background: rgba(168, 213, 196, 0.1);
+  border: 1px solid rgba(168, 213, 196, 0.25);
+}
+
+.my-balance-hero.negative {
+  background: rgba(255, 107, 107, 0.08);
+  border: 1px solid rgba(255, 107, 107, 0.2);
+}
+
+.my-balance-icon {
+  font-size: 2rem;
+  flex-shrink: 0;
+}
+
+.my-balance-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.my-balance-label {
+  font-size: 0.82rem;
+  color: rgba(255, 255, 255, 0.55);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 500;
+}
+
+.my-balance-amount {
+  font-size: 2.25rem;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: -1px;
+}
+
+.my-balance-hero.positive .my-balance-amount { color: #a8d5c4; }
+.my-balance-hero.negative .my-balance-amount { color: #ff6b6b; }
+
+/* Debt rows */
+.debts-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.debt-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem 1.25rem;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 16px;
+  flex-wrap: wrap;
+}
+
+.debt-from,
+.debt-to {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #fff;
+}
+
+.debt-arrow {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.15rem;
+}
+
+.debt-amount {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #ffd166;
+}
+
+.debt-arrow-icon {
+  font-size: 1.2rem;
+  color: rgba(255, 255, 255, 0.3);
+}
+
+.balance-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
