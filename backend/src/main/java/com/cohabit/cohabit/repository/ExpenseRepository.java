@@ -15,7 +15,7 @@ public interface ExpenseRepository extends JpaRepository<Expense, Long> {
     @Query("SELECT DISTINCT e FROM Expense e LEFT JOIN FETCH e.shares")
     List<Expense> findAllWithShares();
 
-    @Query("SELECT DISTINCT e FROM Expense e LEFT JOIN FETCH e.shares WHERE e.householdId = :householdId")
+    @Query("SELECT DISTINCT e FROM Expense e LEFT JOIN FETCH e.shares WHERE e.household.id = :householdId")
     List<Expense> findByHouseholdIdWithShares(@Param("householdId") Long householdId);
 
     @Query("SELECT e FROM Expense e LEFT JOIN FETCH e.shares WHERE e.id = :id")

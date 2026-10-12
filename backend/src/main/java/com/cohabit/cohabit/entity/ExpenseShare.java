@@ -17,8 +17,10 @@ public class ExpenseShare {
     @JsonIgnore
     private Expense expense;
 
-    @Column(name = "user_id")
-    private Long userId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id")
+    @JsonIgnore
+    private User user;
 
     @Column(name = "share_amount")
     private BigDecimal shareAmount;
@@ -34,8 +36,21 @@ public class ExpenseShare {
     public Expense getExpense() { return expense; }
     public void setExpense(Expense expense) { this.expense = expense; }
 
-    public Long getUserId() { return userId; }
-    public void setUserId(Long userId) { this.userId = userId; }
+    public User getUser() { return user; }
+    public void setUser(User user) { this.user = user; }
+
+    public Long getUserId() {
+        return user != null ? user.getId() : null;
+    }
+    public void setUserId(Long userId) {
+        if (userId != null) {
+            User u = new User();
+            u.setId(userId);
+            this.user = u;
+        } else {
+            this.user = null;
+        }
+    }
 
     public BigDecimal getShareAmount() { return shareAmount; }
     public void setShareAmount(BigDecimal shareAmount) { this.shareAmount = shareAmount; }

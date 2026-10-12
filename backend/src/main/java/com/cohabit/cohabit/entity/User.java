@@ -1,5 +1,6 @@
 package com.cohabit.cohabit.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
@@ -20,8 +21,10 @@ public class User {
 
     private String color = "#4F46E5";
 
-    @Column(name = "household_id")
-    private Long householdId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "household_id")
+    @JsonIgnore
+    private Household household;
 
     @Column(name = "created_at", insertable = false, updatable = false)
     private LocalDateTime createdAt;
@@ -42,8 +45,21 @@ public class User {
     public String getColor() { return color; }
     public void setColor(String color) { this.color = color; }
 
-    public Long getHouseholdId() { return householdId; }
-    public void setHouseholdId(Long householdId) { this.householdId = householdId; }
+    public Household getHousehold() { return household; }
+    public void setHousehold(Household household) { this.household = household; }
+
+    public Long getHouseholdId() {
+        return household != null ? household.getId() : null;
+    }
+    public void setHouseholdId(Long householdId) {
+        if (householdId != null) {
+            Household h = new Household();
+            h.setId(householdId);
+            this.household = h;
+        } else {
+            this.household = null;
+        }
+    }
 
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }

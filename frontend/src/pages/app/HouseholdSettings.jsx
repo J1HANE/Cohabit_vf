@@ -23,6 +23,7 @@ export default function HouseholdSettings() {
   const [regenerating, setRegenerating] = useState(false);
   const [revokeSuccess, setRevokeSuccess] = useState('');
   const [nameSaved, setNameSaved] = useState(false);
+  const [saveError, setSaveError] = useState(null);
 
   const inviteCode = household?.invite_code || household?.inviteCode || '';
 
@@ -32,11 +33,33 @@ export default function HouseholdSettings() {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const handleSaveName = (e) => {
+  const handleSaveName = async (e) => {
     e.preventDefault();
-    // TODO: PATCH /api/households/:id
-    setNameSaved(true);
-    setTimeout(() => setNameSaved(false), 2000);
+    setSaveError(null);
+    if (!household?.id) {
+      setNameSaved(true);
+      setTimeout(() => setNameSaved(false), 2000);
+      return;
+    }
+
+    try {
+      const res = await fetch(`http://localhost:8081/api/households/${household.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: householdName }),
+      });
+      if (res.ok) {
+        const updated = await res.json();
+        setHouseholdData(updated, members);
+        setNameSaved(true);
+        setTimeout(() => setNameSaved(false), 2000);
+      } else {
+        const err = await res.json().catch(() => ({}));
+        setSaveError(err.error || 'Failed to update household name');
+      }
+    } catch {
+      setSaveError('Could not reach backend');
+    }
   };
 
   const handleRegenerateCode = async () => {
@@ -97,6 +120,7 @@ export default function HouseholdSettings() {
       {/* Household name */}
       <div className="app-card hs-card">
         <h3 className="profile-section-title">Household Name</h3>
+        {saveError && <p style={{ color: '#ef4444', marginBottom: '0.5rem', fontSize: '0.85rem' }}>{saveError}</p>}
         <form onSubmit={handleSaveName} className="app-form">
           <div className="app-form-group">
             <label className="app-form-label">Name</label>
@@ -240,4 +264,3 @@ export default function HouseholdSettings() {
     </div>
   );
 }
-

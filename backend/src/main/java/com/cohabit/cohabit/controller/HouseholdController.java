@@ -2,13 +2,11 @@ package com.cohabit.cohabit.controller;
 
 import com.cohabit.cohabit.entity.Household;
 import com.cohabit.cohabit.entity.User;
-import com.cohabit.cohabit.repository.HouseholdRepository;
-import com.cohabit.cohabit.repository.UserRepository;
+import com.cohabit.cohabit.service.HouseholdService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.security.SecureRandom;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -18,62 +16,81 @@ import java.util.stream.Collectors;
 @RequestMapping("/api/households")
 public class HouseholdController {
 
-    private static final String INVITE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-    private static final SecureRandom RANDOM = new SecureRandom();
+    private final HouseholdService householdService;
 
     @Autowired
-    private UserRepository userRepository;
+    public HouseholdController(HouseholdService householdService) {
+        this.householdService = householdService;
+    }
 
-    @Autowired
-    private HouseholdRepository householdRepository;
+    // READ ALL
+    @GetMapping
+    public List<Map<String, Object>> getAllHouseholds() {
+        return householdService.getAllHouseholds().stream()
+                .map(this::toHouseholdMap)
+                .collect(Collectors.toList());
+    }
 
+    // READ BY ID
     @GetMapping("/{householdId}")
     public ResponseEntity<?> getHousehold(@PathVariable Long householdId) {
-        return householdRepository.findById(householdId)
+        return householdService.getHouseholdById(householdId)
                 .map(h -> ResponseEntity.ok(toHouseholdMap(h)))
                 .orElse(ResponseEntity.notFound().build());
     }
 
+    // READ MEMBERS
     @GetMapping("/{householdId}/members")
     public List<Map<String, Object>> getMembers(@PathVariable Long householdId) {
-        List<User> users = userRepository.findByHouseholdId(householdId);
+        List<User> users = householdService.getHouseholdMembers(householdId);
         return users.stream().map(this::toMemberMap).collect(Collectors.toList());
     }
 
+    // CREATE
     @PostMapping
     public ResponseEntity<?> createHousehold(@RequestBody Map<String, Object> payload) {
         String name = payload.get("name") != null ? payload.get("name").toString().trim() : "";
         Long userId = toLong(payload.get("userId"));
 
-        if (name.isEmpty()) {
-            return ResponseEntity.badRequest().body(Map.of("error", "Household name is required"));
-        }
-        if (userId == null) {
-            return ResponseEntity.badRequest().body(Map.of("error", "userId is required"));
-        }
+        try {
+            Household household = householdService.createHousehold(name, userId);
+            List<User> members = householdService.getHouseholdMembers(household.getId());
 
-        User user = userRepository.findById(userId).orElse(null);
-        if (user == null) {
-            return ResponseEntity.badRequest().body(Map.of("error", "User not found"));
+            Map<String, Object> response = new HashMap<>();
+            response.put("household", toHouseholdMap(household));
+            response.put("members", members.stream().map(this::toMemberMap).collect(Collectors.toList()));
+            return ResponseEntity.ok(response);
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }
-        if (user.getHouseholdId() != null) {
-            return ResponseEntity.badRequest().body(Map.of("error", "User already belongs to a household"));
-        }
-
-        Household household = new Household();
-        household.setName(name);
-        household.setInviteCode(generateUniqueInviteCode());
-        household = householdRepository.save(household);
-
-        user.setHouseholdId(household.getId());
-        userRepository.save(user);
-
-        Map<String, Object> response = new HashMap<>();
-        response.put("household", toHouseholdMap(household));
-        response.put("members", List.of(toMemberMap(user)));
-        return ResponseEntity.ok(response);
     }
 
+    // UPDATE
+    @PutMapping("/{householdId}")
+    public ResponseEntity<?> updateHousehold(@PathVariable Long householdId, @RequestBody Map<String, Object> payload) {
+        String name = payload.get("name") != null ? payload.get("name").toString().trim() : "";
+        try {
+            Household updated = householdService.updateHousehold(householdId, name);
+            return ResponseEntity.ok(toHouseholdMap(updated));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        } catch (RuntimeException e) {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
+    // DELETE
+    @DeleteMapping("/{householdId}")
+    public ResponseEntity<?> deleteHousehold(@PathVariable Long householdId) {
+        try {
+            householdService.deleteHousehold(householdId);
+            return ResponseEntity.noContent().build();
+        } catch (RuntimeException e) {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
+    // JOIN
     @PostMapping("/join")
     public ResponseEntity<?> joinHousehold(@RequestBody Map<String, Object> payload) {
         String inviteCode = payload.get("inviteCode") != null
@@ -81,38 +98,20 @@ public class HouseholdController {
                 : "";
         Long userId = toLong(payload.get("userId"));
 
-        if (inviteCode.isEmpty()) {
-            return ResponseEntity.badRequest().body(Map.of("error", "Invitation code is required"));
-        }
-        if (userId == null) {
-            return ResponseEntity.badRequest().body(Map.of("error", "userId is required"));
-        }
+        try {
+            Household household = householdService.joinHousehold(inviteCode, userId);
+            List<User> members = householdService.getHouseholdMembers(household.getId());
 
-        User user = userRepository.findById(userId).orElse(null);
-        if (user == null) {
-            return ResponseEntity.badRequest().body(Map.of("error", "User not found"));
+            Map<String, Object> response = new HashMap<>();
+            response.put("household", toHouseholdMap(household));
+            response.put("members", members.stream().map(this::toMemberMap).collect(Collectors.toList()));
+            return ResponseEntity.ok(response);
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }
-        if (user.getHouseholdId() != null) {
-            return ResponseEntity.badRequest().body(Map.of("error", "User already belongs to a household"));
-        }
-
-        Household household = householdRepository.findByInviteCode(inviteCode).orElse(null);
-        if (household == null) {
-            return ResponseEntity.badRequest().body(Map.of("error", "Invalid invitation code"));
-        }
-
-        user.setHouseholdId(household.getId());
-        userRepository.save(user);
-
-        List<Map<String, Object>> members = userRepository.findByHouseholdId(household.getId())
-                .stream().map(this::toMemberMap).collect(Collectors.toList());
-
-        Map<String, Object> response = new HashMap<>();
-        response.put("household", toHouseholdMap(household));
-        response.put("members", members);
-        return ResponseEntity.ok(response);
     }
 
+    // LEAVE
     @PostMapping("/leave")
     public ResponseEntity<?> leaveHousehold(@RequestBody Map<String, Object> payload) {
         Long userId = toLong(payload.get("userId"));
@@ -120,51 +119,28 @@ public class HouseholdController {
             return ResponseEntity.badRequest().body(Map.of("error", "userId is required"));
         }
 
-        User user = userRepository.findById(userId).orElse(null);
-        if (user == null) {
-            return ResponseEntity.badRequest().body(Map.of("error", "User not found"));
+        try {
+            householdService.leaveHousehold(userId);
+            return ResponseEntity.ok(Map.of("message", "Successfully left household"));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }
-
-        user.setHouseholdId(null);
-        userRepository.save(user);
-
-        return ResponseEntity.ok(Map.of("message", "Successfully left household"));
     }
 
+    // REGENERATE INVITE CODE
     @PostMapping("/{householdId}/regenerate-code")
     public ResponseEntity<?> regenerateInviteCode(@PathVariable Long householdId, @RequestBody(required = false) Map<String, Object> payload) {
-        Household household = householdRepository.findById(householdId).orElse(null);
-        if (household == null) {
+        try {
+            Household household = householdService.regenerateInviteCode(householdId);
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("household", toHouseholdMap(household));
+            response.put("inviteCode", household.getInviteCode());
+            response.put("message", "New invitation code generated successfully");
+            return ResponseEntity.ok(response);
+        } catch (RuntimeException e) {
             return ResponseEntity.notFound().build();
         }
-
-        String newCode = generateUniqueInviteCode();
-        household.setInviteCode(newCode);
-        household = householdRepository.save(household);
-
-        Map<String, Object> response = new HashMap<>();
-        response.put("household", toHouseholdMap(household));
-        response.put("inviteCode", newCode);
-        response.put("message", "New invitation code generated successfully");
-        return ResponseEntity.ok(response);
-    }
-
-    private String generateUniqueInviteCode() {
-        for (int attempt = 0; attempt < 20; attempt++) {
-            String code = randomInviteCode(6);
-            if (householdRepository.findByInviteCode(code).isEmpty()) {
-                return code;
-            }
-        }
-        throw new IllegalStateException("Could not generate a unique invite code");
-    }
-
-    private String randomInviteCode(int length) {
-        StringBuilder sb = new StringBuilder(length);
-        for (int i = 0; i < length; i++) {
-            sb.append(INVITE_ALPHABET.charAt(RANDOM.nextInt(INVITE_ALPHABET.length())));
-        }
-        return sb.toString();
     }
 
     private Map<String, Object> toHouseholdMap(Household h) {

@@ -1,5 +1,6 @@
 package com.cohabit.cohabit.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import java.time.LocalDate;
@@ -15,11 +16,15 @@ public class Expense {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "household_id")
-    private Long householdId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "household_id")
+    @JsonIgnore
+    private Household household;
 
-    @Column(name = "payer_id")
-    private Long payerId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "payer_id")
+    @JsonIgnore
+    private User payer;
 
     @NotBlank(message = "Label is mandatory")
     private String label;
@@ -42,11 +47,37 @@ public class Expense {
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
-    public Long getHouseholdId() { return householdId; }
-    public void setHouseholdId(Long householdId) { this.householdId = householdId; }
+    public Household getHousehold() { return household; }
+    public void setHousehold(Household household) { this.household = household; }
 
-    public Long getPayerId() { return payerId; }
-    public void setPayerId(Long payerId) { this.payerId = payerId; }
+    public Long getHouseholdId() {
+        return household != null ? household.getId() : null;
+    }
+    public void setHouseholdId(Long householdId) {
+        if (householdId != null) {
+            Household h = new Household();
+            h.setId(householdId);
+            this.household = h;
+        } else {
+            this.household = null;
+        }
+    }
+
+    public User getPayer() { return payer; }
+    public void setPayer(User payer) { this.payer = payer; }
+
+    public Long getPayerId() {
+        return payer != null ? payer.getId() : null;
+    }
+    public void setPayerId(Long payerId) {
+        if (payerId != null) {
+            User u = new User();
+            u.setId(payerId);
+            this.payer = u;
+        } else {
+            this.payer = null;
+        }
+    }
 
     public String getLabel() { return label; }
     public void setLabel(String label) { this.label = label; }
