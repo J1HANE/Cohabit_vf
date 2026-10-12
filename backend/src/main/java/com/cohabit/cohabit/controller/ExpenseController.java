@@ -43,11 +43,12 @@ public class ExpenseController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Expense> updateExpense(@PathVariable Long id, @Valid @RequestBody Expense expense) {
+    public ResponseEntity<?> updateExpense(@PathVariable Long id, @Valid @RequestBody Expense expense) {
         try {
             return ResponseEntity.ok(expenseService.updateExpense(id, expense));
         } catch (RuntimeException e) {
-            return ResponseEntity.notFound().build();
+            e.printStackTrace();
+            return ResponseEntity.status(404).body(java.util.Map.of("error", e.getMessage()));
         }
     }
 

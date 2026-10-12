@@ -70,31 +70,39 @@ public class ExpenseService {
         return expenseRepository.save(expense);
     }
 
+    @jakarta.persistence.PersistenceContext
+    private jakarta.persistence.EntityManager entityManager;
+
     @Transactional
     public Expense updateExpense(Long id, Expense expenseDetails) {
-        return expenseRepository.findByIdWithShares(id).map(expense -> {
-            expense.setHouseholdId(expenseDetails.getHouseholdId());
-            expense.setPayerId(expenseDetails.getPayerId());
-            expense.setLabel(expenseDetails.getLabel());
-            expense.setAmount(expenseDetails.getAmount());
-            expense.setExpenseDate(expenseDetails.getExpenseDate());
-            expense.setEmoji(expenseDetails.getEmoji());
-            
-            if (expense.getShares() != null) {
-                expense.getShares().clear();
-                if (expenseDetails.getShares() != null) {
-                    expenseDetails.getShares().forEach(share -> {
-                        share.setExpense(expense);
-                        expense.getShares().add(share);
-                    });
-                }
-            } else if (expenseDetails.getShares() != null) {
-                expenseDetails.getShares().forEach(share -> share.setExpense(expense));
-                expense.setShares(expenseDetails.getShares());
-            }
+        Expense expense = expenseRepository.findByIdWithShares(id)
+                .orElseThrow(() -> new RuntimeException("Expense not found with id " + id));
 
-            return expenseRepository.save(expense);
-        }).orElseThrow(() -> new RuntimeException("Expense not found with id " + id));
+        expense.setHouseholdId(expenseDetails.getHouseholdId());
+        expense.setPayerId(expenseDetails.getPayerId());
+        expense.setLabel(expenseDetails.getLabel());
+        expense.setAmount(expenseDetails.getAmount());
+        expense.setExpenseDate(expenseDetails.getExpenseDate());
+        expense.setEmoji(expenseDetails.getEmoji());
+
+        if (expense.getShares() != null) {
+            expense.getShares().clear();
+            entityManager.flush();
+        }
+
+        if (expenseDetails.getShares() != null) {
+            for (com.cohabit.cohabit.entity.ExpenseShare share : expenseDetails.getShares()) {
+                share.setExpense(expense);
+                if (share.getUserId() != null && share.getUserId().equals(expense.getPayerId())) {
+                    share.setPaidAmount(share.getShareAmount());
+                } else if (share.getPaidAmount() == null) {
+                    share.setPaidAmount(java.math.BigDecimal.ZERO);
+                }
+                expense.getShares().add(share);
+            }
+        }
+
+        return expenseRepository.save(expense);
     }
 
     @Transactional
