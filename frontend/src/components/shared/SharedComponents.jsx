@@ -59,7 +59,7 @@ export function ExpenseCard({ expense, payer, onClick }) {
 }
 
 /* ── TaskCard ── */
-export function TaskCard({ task, assignee, onComplete }) {
+export function TaskCard({ task, assignee, onComplete, onReassign }) {
   const isOverdue = task.due_date && new Date(task.due_date) < new Date() && task.status !== 'completed';
   const isToday = task.due_date && new Date(task.due_date).toDateString() === new Date().toDateString();
 
@@ -81,11 +81,22 @@ export function TaskCard({ task, assignee, onComplete }) {
           </span>
         </span>
       </div>
-      {task.frequency_days && (
-        <span className="task-freq">
-          Every {task.frequency_days === 1 ? 'day' : `${task.frequency_days} days`}
-        </span>
-      )}
+      <div className="task-card-actions">
+        {task.frequency_days && (
+          <span className="task-freq">
+            Every {task.frequency_days === 1 ? 'day' : `${task.frequency_days} days`}
+          </span>
+        )}
+        {onReassign && task.status !== 'completed' && (
+          <button
+            className="task-reassign-btn"
+            onClick={(e) => { e.stopPropagation(); onReassign(task); }}
+            title="Reassign randomly"
+          >
+            🎰
+          </button>
+        )}
+      </div>
     </div>
   );
 }
