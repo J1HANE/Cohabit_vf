@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { PageHeader, AppButton } from '../../components/shared/SharedComponents';
 import { useAuth } from '../../context/AuthContext';
 import { useHousehold } from '../../context/HouseholdContext';
+import SpinWheel from '../../components/SpinWheel/SpinWheel';
 
 const FREQUENCIES = [
   { label: 'Every day', value: 1 },
@@ -23,6 +24,7 @@ export default function TaskNew() {
     due_date: new Date().toISOString().split('T')[0],
   });
   const [errors, setErrors] = useState({});
+  const [showSpinWheel, setShowSpinWheel] = useState(false);
 
   const validate = () => {
     const errs = {};
@@ -99,15 +101,28 @@ export default function TaskNew() {
 
           <div className="app-form-group">
             <label className="app-form-label">Assigned to</label>
-            <select
-              className="app-form-select"
-              value={form.assigned_user_id}
-              onChange={(e) => setForm((f) => ({ ...f, assigned_user_id: parseInt(e.target.value) }))}
-            >
-              {members.map((m) => (
-                <option key={m.id} value={m.id}>{m.name}{m.id === user?.id ? ' (you)' : ''}</option>
-              ))}
-            </select>
+            <div style={{ display: 'flex', gap: '10px' }}>
+              <select
+                className="app-form-select"
+                value={form.assigned_user_id}
+                onChange={(e) => setForm((f) => ({ ...f, assigned_user_id: parseInt(e.target.value) }))}
+                style={{ flex: 1 }}
+              >
+                {members.map((m) => (
+                  <option key={m.id} value={m.id}>{m.name}{m.id === user?.id ? ' (you)' : ''}</option>
+                ))}
+              </select>
+              <AppButton
+                type="button"
+                variant="ghost"
+                size="md"
+                onClick={() => setShowSpinWheel(true)}
+                disabled={members.length === 0}
+                title="Randomly assign task"
+              >
+                🎰
+              </AppButton>
+            </div>
           </div>
 
           <div className="app-form-group">
@@ -140,6 +155,17 @@ export default function TaskNew() {
           </AppButton>
         </form>
       </div>
+
+      {showSpinWheel && (
+        <SpinWheel
+          members={members}
+          onClose={() => setShowSpinWheel(false)}
+          onSelect={(member) => {
+            setForm((f) => ({ ...f, assigned_user_id: member.id }));
+            setShowSpinWheel(false);
+          }}
+        />
+      )}
     </div>
   );
 }

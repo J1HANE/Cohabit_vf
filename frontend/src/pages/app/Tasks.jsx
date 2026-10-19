@@ -7,15 +7,18 @@ import {
   TaskCard,
   EmptyState,
 } from '../../components/shared/SharedComponents';
+import SpinWheel from '../../components/SpinWheel/SpinWheel';
 import './Tasks.css';
 
 const TABS = ['Today', 'Upcoming', 'Completed'];
 
 export default function Tasks() {
   const navigate = useNavigate();
-  const { household, getMemberById } = useHousehold();
+  const { household, getMemberById, members } = useHousehold();
   const [tasks, setTasks] = useState([]);
   const [activeTab, setActiveTab] = useState('Today');
+  const [showSpinWheel, setShowSpinWheel] = useState(false);
+  const [taskToReassign, setTaskToReassign] = useState(null);
 
 
   useEffect(() => {
@@ -50,7 +53,7 @@ export default function Tasks() {
   const toggleTask = (id) => {
     const taskToUpdate = tasks.find(t => t.id === id);
     if (!taskToUpdate) return;
-    
+
     const updatedStatus = taskToUpdate.status === 'completed' ? 'pending' : 'completed';
 
     fetch(`http://localhost:8081/api/tasks/${id}`, {
@@ -69,8 +72,8 @@ export default function Tasks() {
     .then(updatedTask => {
       setTasks((prev) =>
         prev.map((t) =>
-          t.id === id ? { 
-            ...t, 
+          t.id === id ? {
+            ...t,
             ...updatedTask,
             status: updatedTask.status,
             due_date: updatedTask.dueDate,
@@ -82,20 +85,67 @@ export default function Tasks() {
     .catch(err => console.error("Failed to update task", err));
   };
 
+  const reassignTask = (task, newAssignee) => {
+    fetch(`http://localhost:8081/api/tasks/${task.id}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        ...task,
+        assignedUserId: newAssignee.id,
+        dueDate: task.due_date,
+        status: task.status
+      })
+    })
+    .then(res => res.json())
+    .then(updatedTask => {
+      setTasks((prev) =>
+        prev.map((t) =>
+          t.id === task.id ? {
+            ...t,
+            ...updatedTask,
+            assigned_user_id: updatedTask.assignedUserId
+          } : t
+        )
+      );
+    })
+    .catch(err => console.error("Failed to reassign task", err));
+  };
+
+  const handleSpinWheelSelect = (member) => {
+    if (taskToReassign) {
+      reassignTask(taskToReassign, member);
+      setTaskToReassign(null);
+    }
+    setShowSpinWheel(false);
+  };
+
   return (
     <div className="tasks-page page-fade">
       <PageHeader
         title="Tasks"
         subtitle="Household chores & responsibilities"
         action={
-          <AppButton
-            variant="primary"
-            size="md"
-            onClick={() => navigate('/tasks/new')}
-            icon="+"
-          >
-            Add task
-          </AppButton>
+          <div style={{ display: 'flex', gap: '10px' }}>
+            <AppButton
+              variant="ghost"
+              size="md"
+              onClick={() => setShowSpinWheel(true)}
+              disabled={members.length === 0}
+              title="Randomly reassign all tasks"
+            >
+              🎰 Reassign All
+            </AppButton>
+            <AppButton
+              variant="primary"
+              size="md"
+              onClick={() => navigate('/tasks/new')}
+              icon="+"
+            >
+              Add task
+            </AppButton>
+          </div>
         }
       />
 
@@ -156,10 +206,25 @@ export default function Tasks() {
               task={task}
               assignee={getMemberById(task.assigned_user_id)}
               onComplete={toggleTask}
+              onReassign={(task) => {
+                setTaskToReassign(task);
+                setShowSpinWheel(true);
+              }}
             />
           ))
         )}
       </div>
+
+      {showSpinWheel && (
+        <SpinWheel
+          members={members}
+          onClose={() => {
+            setShowSpinWheel(false);
+            setTaskToReassign(null);
+          }}
+          onSelect={handleSpinWheelSelect}
+        />
+      )}
     </div>
   );
 }
