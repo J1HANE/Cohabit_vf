@@ -39,6 +39,9 @@ public class Expense {
 
     private String emoji;
 
+    @Column(name = "attachment_url")
+    private String attachmentUrl;
+
     @OneToMany(mappedBy = "expense", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ExpenseShare> shares;
 
@@ -93,6 +96,9 @@ public class Expense {
 
     public String getEmoji() { return emoji; }
     public void setEmoji(String emoji) { this.emoji = emoji; }
+
+    public String getAttachmentUrl() { return attachmentUrl; }
+    public void setAttachmentUrl(String attachmentUrl) { this.attachmentUrl = attachmentUrl; }
 
     public List<ExpenseShare> getShares() { return shares; }
     public void setShares(List<ExpenseShare> shares) { this.shares = shares; }

@@ -140,6 +140,15 @@
   text-overflow: ellipsis;
 }
 
+.expense-attachment-badge {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 0.35rem;
+  font-size: 0.8rem;
+  opacity: 0.8;
+  vertical-align: middle;
+}
+
 .expense-card-meta {
   font-size: 0.78rem;
   color: rgba(255, 255, 255, 0.45);

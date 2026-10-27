@@ -38,6 +38,7 @@ export default function Expenses() {
           expense_date: e.expenseDate || e.expense_date,
           payer_id: e.payerId || e.payer_id,
           household_id: e.householdId || e.household_id,
+          attachment_url: e.attachmentUrl || e.attachment_url,
           shares: (e.shares || []).map((s) => ({
             id: s.id,
             user_id: s.userId || s.user_id,

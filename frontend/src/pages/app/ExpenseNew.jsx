@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { PageHeader, AppButton, HouseholdMemberAvatar } from '../../components/shared/SharedComponents';
 import { useAuth } from '../../context/AuthContext';
@@ -25,6 +25,9 @@ export default function ExpenseNew() {
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [errors, setErrors] = useState({});
   const [submitting, setSubmitting] = useState(false);
+  const [file, setFile] = useState(null);
+  const [filePreview, setFilePreview] = useState(null);
+  const fileInputRef = useRef(null);
 
   const totalAmount = parseFloat(form.amount) || 0;
   const totalShares = shares
@@ -66,6 +69,39 @@ export default function ExpenseNew() {
     return errs;
   };
 
+  const handleFileChange = (e) => {
+    const selected = e.target.files?.[0];
+    if (!selected) return;
+
+    if (selected.size > 10 * 1024 * 1024) {
+      setErrors((prev) => ({ ...prev, file: 'Le fichier ne doit pas dépasser 10 Mo.' }));
+      return;
+    }
+
+    setErrors((prev) => {
+      const copy = { ...prev };
+      delete copy.file;
+      return copy;
+    });
+
+    setFile(selected);
+    if (selected.type.startsWith('image/')) {
+      const reader = new FileReader();
+      reader.onload = () => setFilePreview(reader.result);
+      reader.readAsDataURL(selected);
+    } else {
+      setFilePreview(null);
+    }
+  };
+
+  const handleRemoveFile = () => {
+    setFile(null);
+    setFilePreview(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     const errs = validate();
@@ -77,20 +113,41 @@ export default function ExpenseNew() {
       return;
     }
 
-    const payload = {
-      householdId,
-      payerId: form.payer_id,
-      label: form.label,
-      amount: parseFloat(form.amount),
-      expenseDate: form.expense_date,
-      emoji: form.emoji,
-      shares: shares
-        .filter((s) => s.selected)
-        .map((s) => ({ userId: s.user_id, shareAmount: parseFloat(s.share_amount) })),
-    };
-
     setSubmitting(true);
     try {
+      let attachmentUrl = null;
+
+      // Upload file if selected
+      if (file) {
+        const formData = new FormData();
+        formData.append('file', file);
+        const uploadRes = await fetch('http://localhost:8081/api/upload', {
+          method: 'POST',
+          body: formData,
+        });
+
+        if (!uploadRes.ok) {
+          const uploadErr = await uploadRes.json().catch(() => ({}));
+          throw new Error(uploadErr.error || "Échec de l'envoi du justificatif");
+        }
+
+        const uploadData = await uploadRes.json();
+        attachmentUrl = uploadData.url;
+      }
+
+      const payload = {
+        householdId,
+        payerId: form.payer_id,
+        label: form.label,
+        amount: parseFloat(form.amount),
+        expenseDate: form.expense_date,
+        emoji: form.emoji,
+        attachmentUrl,
+        shares: shares
+          .filter((s) => s.selected)
+          .map((s) => ({ userId: s.user_id, shareAmount: parseFloat(s.share_amount) })),
+      };
+
       const res = await fetch('http://localhost:8081/api/expenses', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -102,8 +159,8 @@ export default function ExpenseNew() {
         const err = await res.json().catch(() => ({}));
         setErrors({ submit: err.message || 'Failed to save expense. Please try again.' });
       }
-    } catch {
-      setErrors({ submit: 'Could not reach the server. Check your connection.' });
+    } catch (err) {
+      setErrors({ submit: err.message || 'Could not reach the server. Check your connection.' });
     } finally {
       setSubmitting(false);
     }
@@ -200,6 +257,59 @@ export default function ExpenseNew() {
                 onChange={(e) => setForm((f) => ({ ...f, expense_date: e.target.value }))}
               />
             </div>
+          </div>
+
+          {/* Receipt / Justificatif (optional) */}
+          <div className="app-form-group">
+            <div className="receipt-upload-header">
+              <label className="app-form-label">Justificatif (reçu, facture...)</label>
+              <span className="app-form-optional">Facultatif</span>
+            </div>
+
+            <input
+              ref={fileInputRef}
+              type="file"
+              id="expense-receipt-input"
+              className="receipt-file-input"
+              accept=".jpg,.jpeg,.png,.webp,.pdf,image/*,application/pdf"
+              onChange={handleFileChange}
+            />
+
+            {!file ? (
+              <label htmlFor="expense-receipt-input" className="receipt-upload-dropzone">
+                <div className="receipt-upload-icon">📎</div>
+                <div className="receipt-upload-text">
+                  <span className="receipt-upload-title">Ajouter un justificatif</span>
+                  <span className="receipt-upload-sub">Photo ou PDF jusqu'à 10 Mo</span>
+                </div>
+              </label>
+            ) : (
+              <div className="receipt-preview-card">
+                {filePreview ? (
+                  <div className="receipt-preview-img-box">
+                    <img src={filePreview} alt="Aperçu justificatif" className="receipt-preview-img" />
+                  </div>
+                ) : (
+                  <div className="receipt-preview-icon">📄</div>
+                )}
+                <div className="receipt-preview-info">
+                  <span className="receipt-preview-name">{file.name}</span>
+                  <span className="receipt-preview-size">
+                    {(file.size / 1024).toFixed(1)} Ko
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleRemoveFile}
+                  className="receipt-preview-remove"
+                  title="Supprimer ce justificatif"
+                  aria-label="Supprimer ce justificatif"
+                >
+                  ✕
+                </button>
+              </div>
+            )}
+            {errors.file && <span className="form-error">{errors.file}</span>}
           </div>
 
           {/* Split section */}

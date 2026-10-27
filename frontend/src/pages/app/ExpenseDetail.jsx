@@ -36,6 +36,7 @@ export default function ExpenseDetail() {
           ...data,
           expense_date: data.expenseDate || data.expense_date,
           payer_id: data.payerId || data.payer_id,
+          attachment_url: data.attachmentUrl || data.attachment_url,
           shares: (data.shares || []).map((s) => ({
             id: s.id,
             user_id: s.userId || s.user_id,
@@ -287,6 +288,50 @@ export default function ExpenseDetail() {
             })}
           </div>
         </div>
+
+        {/* Attachment (Justificatif) if present */}
+        {expense.attachment_url && (
+          <div className="expense-detail-section">
+            <span className="expense-detail-section-label">Justificatif / Receipt</span>
+            <div className="expense-detail-attachment">
+              {expense.attachment_url.match(/\.(jpg|jpeg|png|webp)($|\?)/i) ? (
+                <div className="attachment-image-preview">
+                  <a
+                    href={`http://localhost:8081${expense.attachment_url}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="attachment-image-link"
+                    title="Cliquer pour ouvrir en grand"
+                  >
+                    <img
+                      src={`http://localhost:8081${expense.attachment_url}`}
+                      alt="Justificatif de dépense"
+                      className="attachment-img"
+                    />
+                    <div className="attachment-image-overlay">
+                      <span>🔍 Agrandir l'image</span>
+                    </div>
+                  </a>
+                </div>
+              ) : (
+                <a
+                  href={`http://localhost:8081${expense.attachment_url}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="attachment-doc-card"
+                >
+                  <div className="attachment-doc-icon">📄</div>
+                  <div className="attachment-doc-info">
+                    <span className="attachment-doc-name">
+                      {expense.attachment_url.split('/').pop()}
+                    </span>
+                    <span className="attachment-doc-action">Ouvrir le justificatif PDF →</span>
+                  </div>
+                </a>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* Actions */}
         <div className="expense-detail-actions">

@@ -41,11 +41,20 @@ export function SummaryCard({ icon, label, value, sub, accent, onClick }) {
 
 /* ── ExpenseCard ── */
 export function ExpenseCard({ expense, payer, onClick }) {
+  const hasAttachment = Boolean(expense?.attachment_url || expense?.attachmentUrl);
+
   return (
     <div className="expense-card" onClick={onClick}>
       <div className="expense-card-emoji">{expense.emoji || '💸'}</div>
       <div className="expense-card-info">
-        <span className="expense-card-label">{expense.label}</span>
+        <span className="expense-card-label">
+          {expense.label}
+          {hasAttachment && (
+            <span className="expense-attachment-badge" title="Justificatif joint" aria-label="Justificatif joint">
+              📎
+            </span>
+          )}
+        </span>
         <span className="expense-card-meta">
           {payer?.name || 'Unknown'} &bull;{' '}
           {new Date(expense.expense_date).toLocaleDateString('en-GB', {

@@ -84,6 +84,7 @@ public class ExpenseService {
         expense.setAmount(expenseDetails.getAmount());
         expense.setExpenseDate(expenseDetails.getExpenseDate());
         expense.setEmoji(expenseDetails.getEmoji());
+        expense.setAttachmentUrl(expenseDetails.getAttachmentUrl());
 
         if (expense.getShares() != null) {
             expense.getShares().clear();
