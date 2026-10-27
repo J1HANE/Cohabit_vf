@@ -53,7 +53,7 @@ export default function TaskNew() {
       rotationIndex: 0
     };
 
-    fetch('http://localhost:8081/api/tasks', {
+    fetch('/api/tasks', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'

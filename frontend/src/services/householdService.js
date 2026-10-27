@@ -1,4 +1,4 @@
-const API_URL = 'http://localhost:8081/api/households';
+const API_URL = '/api/households';
 
 export const getHouseholds = async () => {
     const response = await fetch(API_URL);

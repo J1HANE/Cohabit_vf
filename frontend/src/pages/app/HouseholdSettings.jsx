@@ -43,7 +43,7 @@ export default function HouseholdSettings() {
     }
 
     try {
-      const res = await fetch(`http://localhost:8081/api/households/${household.id}`, {
+      const res = await fetch(`/api/households/${household.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name: householdName }),
@@ -66,7 +66,7 @@ export default function HouseholdSettings() {
     if (!household?.id) return;
     setRegenerating(true);
     try {
-      const res = await fetch(`http://localhost:8081/api/households/${household.id}/regenerate-code`, {
+      const res = await fetch(`/api/households/${household.id}/regenerate-code`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
       });
@@ -90,7 +90,7 @@ export default function HouseholdSettings() {
   const handleLeave = async () => {
     try {
       if (user?.id) {
-        await fetch('http://localhost:8081/api/households/leave', {
+        await fetch('/api/households/leave', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ userId: user.id }),

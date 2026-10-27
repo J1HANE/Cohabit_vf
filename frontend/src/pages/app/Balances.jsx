@@ -21,8 +21,8 @@ export default function Balances() {
   useEffect(() => {
     const householdId = household?.id || user?.householdId || user?.household_id;
     const url = householdId
-      ? `http://localhost:8081/api/expenses/household/${householdId}`
-      : 'http://localhost:8081/api/expenses';
+      ? `/api/expenses/household/${householdId}`
+      : '/api/expenses';
 
     fetch(url)
       .then(async (res) => {

@@ -1,44 +1,97 @@
-import React, { useState } from 'react';
-import { PageHeader, AppButton, ShoppingItem, EmptyState } from '../../components/shared/SharedComponents';
+import React, { useEffect, useState } from 'react';
+import { PageHeader, AppButton, ShoppingItem, EmptyState, LoadingState } from '../../components/shared/SharedComponents';
 import { useHousehold } from '../../context/HouseholdContext';
 import { useAuth } from '../../context/AuthContext';
-import { MOCK_SHOPPING } from '../../data/mockData';
+import {
+  clearPurchasedShoppingItems,
+  createShoppingItem,
+  deleteShoppingItem,
+  getShoppingItems,
+  updateShoppingItem,
+} from '../../services/shoppingService';
 import './Shopping.css';
 
 export default function Shopping() {
   const { user } = useAuth();
   const { household, getMemberById } = useHousehold();
-  const [items, setItems] = useState(MOCK_SHOPPING);
+  const [items, setItems] = useState([]);
   const [newItem, setNewItem] = useState('');
-  const currentUserId = user?.id || 1;
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
+  const householdId = household?.id || user?.householdId || user?.household_id;
 
-  const toggleItem = (id) => {
-    setItems((prev) =>
-      prev.map((i) => (i.id === id ? { ...i, purchased: !i.purchased } : i))
-    );
+  useEffect(() => {
+    let active = true;
+
+    if (!householdId) {
+      setItems([]);
+      setLoading(false);
+      return () => { active = false; };
+    }
+
+    setLoading(true);
+    setError('');
+    getShoppingItems(householdId)
+      .then((data) => { if (active) setItems(data); })
+      .catch((loadError) => { if (active) setError(loadError.message); })
+      .finally(() => { if (active) setLoading(false); });
+
+    return () => { active = false; };
+  }, [householdId]);
+
+  const toggleItem = async (id) => {
+    const item = items.find((entry) => entry.id === id);
+    if (!item || !householdId) return;
+    setError('');
+    try {
+      const updated = await updateShoppingItem(id, householdId, !item.purchased);
+      setItems((previous) => previous.map((entry) => entry.id === id ? updated : entry));
+    } catch (updateError) {
+      setError(updateError.message);
+    }
   };
 
-  const deleteItem = (id) => {
-    setItems((prev) => prev.filter((i) => i.id !== id));
+  const deleteItem = async (id) => {
+    if (!householdId) return;
+    setError('');
+    try {
+      await deleteShoppingItem(id, householdId);
+      setItems((previous) => previous.filter((item) => item.id !== id));
+    } catch (deleteError) {
+      setError(deleteError.message);
+    }
   };
 
-  const addItem = (e) => {
+  const addItem = async (e) => {
     e.preventDefault();
-    if (!newItem.trim()) return;
-    const item = {
-      id: Date.now(),
-      household_id: household?.id || 1,
-      name: newItem.trim(),
-      purchased: false,
-      added_by: currentUserId,
-      created_at: new Date().toISOString(),
-    };
-    setItems((prev) => [item, ...prev]);
-    setNewItem('');
+    if (!newItem.trim() || !householdId || saving) return;
+    setSaving(true);
+    setError('');
+    try {
+      const item = await createShoppingItem({
+        householdId,
+        name: newItem.trim(),
+        addedBy: user?.id || null,
+      });
+      setItems((previous) => [item, ...previous]);
+      setNewItem('');
+    } catch (createError) {
+      setError(createError.message);
+    } finally {
+      setSaving(false);
+    }
   };
 
-  const clearPurchased = () => {
-    setItems((prev) => prev.filter((i) => !i.purchased));
+  const clearPurchased = async () => {
+    if (!householdId) return;
+    setError('');
+    try {
+      await clearPurchasedShoppingItems(householdId);
+      setItems((previous) => previous.filter((item) => !item.purchased));
+    } catch (clearError) {
+      setError(clearError.message);
+    }
   };
 
   const pending = items.filter((i) => !i.purchased);
@@ -51,7 +104,7 @@ export default function Shopping() {
         subtitle="Collaborative household shopping"
         action={
           purchased.length > 0 && (
-            <AppButton variant="ghost" size="sm" onClick={clearPurchased}>
+            <AppButton variant="ghost" size="sm" onClick={clearPurchased} disabled={loading}>
               Clear purchased
             </AppButton>
           )
@@ -66,13 +119,25 @@ export default function Shopping() {
           value={newItem}
           onChange={(e) => setNewItem(e.target.value)}
         />
-        <AppButton type="submit" variant="accent" size="md" icon="+" disabled={!newItem.trim()}>
-          Add
+        <AppButton type="submit" variant="accent" size="md" icon="+" disabled={!newItem.trim() || !householdId || saving}>
+          {saving ? 'Adding...' : 'Add'}
         </AppButton>
       </form>
 
+      {error && <p className="shopping-error" role="alert">{error}</p>}
+
+      {!householdId && !loading && (
+        <EmptyState
+          icon="🛒"
+          title="No household selected"
+          description="Join or create a household to use its shopping list."
+        />
+      )}
+
+      {loading && <LoadingState message="Loading shopping list..." />}
+
       {/* Pending items */}
-      {pending.length > 0 && (
+      {!loading && pending.length > 0 && (
         <div className="section-block">
           <div className="section-block-header">
             <span className="section-block-title">To buy ({pending.length})</span>
@@ -92,7 +157,7 @@ export default function Shopping() {
       )}
 
       {/* Purchased items */}
-      {purchased.length > 0 && (
+      {!loading && purchased.length > 0 && (
         <div className="section-block">
           <div className="section-block-header">
             <span className="section-block-title">Purchased ({purchased.length})</span>
@@ -112,7 +177,7 @@ export default function Shopping() {
       )}
 
       {/* Empty state */}
-      {items.length === 0 && (
+      {!loading && householdId && items.length === 0 && !error && (
         <EmptyState
           icon="🛒"
           title="List is empty"

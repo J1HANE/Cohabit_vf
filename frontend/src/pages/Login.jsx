@@ -16,7 +16,7 @@ export default function Login() {
     setError('');
     
     try {
-      const response = await fetch('http://localhost:8081/api/auth/login', {
+      const response = await fetch('/api/auth/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -33,8 +33,8 @@ export default function Login() {
         if (data.householdId) {
           try {
             const [householdRes, membersRes] = await Promise.all([
-              fetch(`http://localhost:8081/api/households/${data.householdId}`),
-              fetch(`http://localhost:8081/api/households/${data.householdId}/members`),
+              fetch(`/api/households/${data.householdId}`),
+              fetch(`/api/households/${data.householdId}/members`),
             ]);
             const household = householdRes.ok ? await householdRes.json() : { id: data.householdId };
             const members = membersRes.ok ? await membersRes.json() : [];

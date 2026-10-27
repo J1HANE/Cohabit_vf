@@ -29,8 +29,8 @@ export function HouseholdProvider({ children }) {
 
     try {
       const [householdRes, membersRes] = await Promise.all([
-        fetch(`http://localhost:8081/api/households/${householdId}`),
-        fetch(`http://localhost:8081/api/households/${householdId}/members`),
+        fetch(`/api/households/${householdId}`),
+        fetch(`/api/households/${householdId}/members`),
       ]);
 
       if (!householdRes.ok) {

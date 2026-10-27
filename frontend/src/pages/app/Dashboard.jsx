@@ -11,10 +11,10 @@ import {
   EmptyState,
 } from '../../components/shared/SharedComponents';
 import {
-  MOCK_SHOPPING,
   calculateBalances,
   MOCK_SETTLEMENTS,
 } from '../../data/mockData';
+import { getShoppingItems, updateShoppingItem } from '../../services/shoppingService';
 import './Dashboard.css';
 
 export default function Dashboard() {
@@ -22,12 +22,13 @@ export default function Dashboard() {
   const { household, members, getMemberById } = useHousehold();
   const navigate = useNavigate();
 
-  const [shopping, setShopping] = useState(MOCK_SHOPPING);
+  const [shopping, setShopping] = useState([]);
   const [tasks, setTasks] = useState([]);
   const [expenses, setExpenses] = useState([]);
+  const householdId = household?.id || user?.householdId || user?.household_id;
 
   useEffect(() => {
-    fetch('http://localhost:8081/api/tasks')
+    fetch('/api/tasks')
       .then(async (res) => {
         const data = await res.json();
         if (!res.ok || !Array.isArray(data)) {
@@ -43,10 +44,9 @@ export default function Dashboard() {
       })
       .catch((err) => console.error('Failed to fetch tasks in dashboard', err));
 
-    const householdId = household?.id || user?.householdId || user?.household_id;
     const expenseUrl = householdId
-      ? `http://localhost:8081/api/expenses/household/${householdId}`
-      : 'http://localhost:8081/api/expenses';
+      ? `/api/expenses/household/${householdId}`
+      : '/api/expenses';
 
     fetch(expenseUrl)
       .then(async (res) => {
@@ -69,7 +69,15 @@ export default function Dashboard() {
         setExpenses(mappedData);
       })
       .catch((err) => console.error('Failed to fetch expenses in dashboard', err));
-  }, [household?.id, user]);
+
+    if (householdId) {
+      getShoppingItems(householdId)
+        .then(setShopping)
+        .catch((err) => console.error('Failed to fetch shopping items in dashboard', err));
+    } else {
+      setShopping([]);
+    }
+  }, [householdId]);
 
   const hour = new Date().getHours();
   const greeting =
@@ -100,10 +108,15 @@ export default function Dashboard() {
     );
   };
 
-  const toggleShop = (id) => {
-    setShopping((prev) =>
-      prev.map((s) => (s.id === id ? { ...s, purchased: !s.purchased } : s))
-    );
+  const toggleShop = async (id) => {
+    const item = shopping.find((entry) => entry.id === id);
+    if (!item || !householdId) return;
+    try {
+      const updated = await updateShoppingItem(id, householdId, !item.purchased);
+      setShopping((previous) => previous.map((entry) => entry.id === id ? updated : entry));
+    } catch (error) {
+      console.error('Failed to update shopping item in dashboard', error);
+    }
   };
 
   return (

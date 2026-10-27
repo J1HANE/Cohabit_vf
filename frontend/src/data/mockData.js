@@ -139,15 +139,6 @@ export const MOCK_TASKS = [
   },
 ];
 
-export const MOCK_SHOPPING = [
-  { id: 1, household_id: 1, name: 'Milk', purchased: false, added_by: 2, created_at: '2026-09-29T08:00:00Z' },
-  { id: 2, household_id: 1, name: 'Eggs', purchased: false, added_by: 1, created_at: '2026-09-29T07:00:00Z' },
-  { id: 3, household_id: 1, name: 'Bread', purchased: true, added_by: 3, created_at: '2026-09-28T10:00:00Z' },
-  { id: 4, household_id: 1, name: 'Olive oil', purchased: false, added_by: 2, created_at: '2026-09-28T09:00:00Z' },
-  { id: 5, household_id: 1, name: 'Coffee', purchased: false, added_by: 1, created_at: '2026-09-27T18:00:00Z' },
-  { id: 6, household_id: 1, name: 'Yogurt', purchased: true, added_by: 3, created_at: '2026-09-27T12:00:00Z' },
-];
-
 export const MOCK_SETTLEMENTS = [
   {
     id: 1,

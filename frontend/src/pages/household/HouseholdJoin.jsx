@@ -20,7 +20,7 @@ export default function HouseholdJoin() {
     setError('');
 
     try {
-      const res = await fetch('http://localhost:8081/api/households/join', {
+      const res = await fetch('/api/households/join', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ inviteCode: code.trim(), userId: user.id }),

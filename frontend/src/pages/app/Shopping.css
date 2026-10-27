@@ -13,3 +13,8 @@
   flex-direction: column;
   gap: 0.5rem;
 }
+
+.shopping-error {
+  margin: 0 0 1rem;
+  color: var(--color-danger, #b42318);
+}

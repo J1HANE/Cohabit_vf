@@ -22,7 +22,7 @@ export default function Tasks() {
 
 
   useEffect(() => {
-    fetch('http://localhost:8081/api/tasks')
+    fetch('/api/tasks')
       .then(res => res.json())
       .then(data => {
         // Map backend properties to frontend if necessary, or just set it
@@ -56,7 +56,7 @@ export default function Tasks() {
 
     const updatedStatus = taskToUpdate.status === 'completed' ? 'pending' : 'completed';
 
-    fetch(`http://localhost:8081/api/tasks/${id}`, {
+    fetch(`/api/tasks/${id}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json'
@@ -86,7 +86,7 @@ export default function Tasks() {
   };
 
   const reassignTask = (task, newAssignee) => {
-    fetch(`http://localhost:8081/api/tasks/${task.id}`, {
+    fetch(`/api/tasks/${task.id}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json'

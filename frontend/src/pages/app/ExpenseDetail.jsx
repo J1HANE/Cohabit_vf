@@ -28,7 +28,7 @@ export default function ExpenseDetail() {
   const [successMessage, setSuccessMessage] = useState('');
 
   const fetchExpense = () => {
-    return fetch(`http://localhost:8081/api/expenses/${id}`)
+    return fetch(`/api/expenses/${id}`)
       .then(async (res) => {
         if (!res.ok) throw new Error('Expense not found');
         const data = await res.json();
@@ -59,7 +59,7 @@ export default function ExpenseDetail() {
     if (!window.confirm('Are you sure you want to delete this expense?')) return;
     setDeleting(true);
     try {
-      const res = await fetch(`http://localhost:8081/api/expenses/${id}`, {
+      const res = await fetch(`/api/expenses/${id}`, {
         method: 'DELETE',
       });
       if (res.ok) {
@@ -143,7 +143,7 @@ export default function ExpenseDetail() {
     setSettleError('');
 
     try {
-      const res = await fetch(`http://localhost:8081/api/expenses/${id}/settle`, {
+      const res = await fetch(`/api/expenses/${id}/settle`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
