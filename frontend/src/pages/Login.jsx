@@ -92,6 +92,18 @@ export default function Login() {
           </div>
           <button type="submit" className="btn btn-primary auth-submit">Se connecter</button>
         </form>
+
+        <div className="auth-divider">
+          <span>ou</span>
+        </div>
+
+        <button 
+          type="button" 
+          onClick={() => navigate('/admin/login')} 
+          className="btn btn-secondary auth-admin-btn"
+        >
+          Log in as admin
+        </button>
         
         <div className="auth-footer">
           <p>Pas encore de compte ? <Link to="/register">Inscrivez-vous</Link></p>

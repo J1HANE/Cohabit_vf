@@ -760,3 +760,34 @@
   font-size: 0.9rem;
   text-align: center;
 }
+
+.auth-divider {
+  display: flex;
+  align-items: center;
+  text-align: center;
+  margin: 1.25rem 0 0.75rem;
+  color: rgba(255, 255, 255, 0.4);
+  font-size: 0.85rem;
+}
+
+.auth-divider::before,
+.auth-divider::after {
+  content: '';
+  flex: 1;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.auth-divider span {
+  padding: 0 0.75rem;
+}
+
+.auth-admin-btn {
+  width: 100%;
+  padding: 0.85rem;
+  font-size: 0.95rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
