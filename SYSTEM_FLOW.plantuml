@@ -1,0 +1,202 @@
+@startuml CoHabit System Flow
+
+skinparam backgroundColor #FEFEFE
+skinparam handwritten false
+skinparam shadowing false
+
+actor User
+participant "React UI\n(localhost:5173)" as Frontend
+participant "Service Layer\n(JS)" as Services
+participant "HTTP/REST\n(localhost:8081)" as API
+participant "Spring Boot\nController" as Controller
+participant "Spring Boot\nService" as Service
+participant "Spring Data JPA\nRepository" as Repository
+participant "JPA/Hibernate\nORM" as JPA
+database "MySQL\n(localhost:8889)" as DB
+
+== User Registration Flow ==
+User -> Frontend: Register form
+Frontend -> Services: authService.register()
+Services -> API: POST /api/auth/register
+API -> Controller: HTTP POST
+Controller -> Repository: findByEmail()
+Repository -> JPA: SELECT
+JPA -> DB: Query
+DB --> JPA: Result
+JPA --> Repository: Optional<User>
+Repository --> Controller: User exists?
+Controller -> Controller: passwordEncoder.encode()
+Controller -> Repository: save()
+Repository -> JPA: INSERT
+JPA -> DB: INSERT
+DB --> JPA: Success
+JPA --> Repository: User entity
+Repository --> Controller: User
+Controller --> API: 201 Created + userId
+API --> Services: JSON response
+Services --> Frontend: Success
+Frontend -> User: Registration successful
+
+== Login Flow ==
+User -> Frontend: Login form
+Frontend -> Services: authService.login()
+Services -> API: POST /api/auth/login
+API -> Controller: HTTP POST
+Controller -> Repository: findByEmail()
+Repository -> JPA: SELECT
+JPA -> DB: Query
+DB --> JPA: User
+JPA --> Repository: User
+Repository --> Controller: User
+Controller -> Controller: passwordEncoder.matches()
+alt Valid password
+    Controller --> API: 200 OK + user data
+    API --> Services: JSON response
+    Services -> Frontend: setUser()
+    Frontend -> Frontend: localStorage.setItem()
+    Frontend -> User: Dashboard
+else Invalid password
+    Controller --> API: 401 Unauthorized
+    API --> Services: Error
+    Services -> Frontend: Error message
+    Frontend -> User: Login failed
+end
+
+== Create Expense Flow ==
+User -> Frontend: Add expense form
+Frontend -> Services: expenseService.createExpense()
+Services -> API: POST /api/expenses
+API -> Controller: HTTP POST
+Controller -> Controller: @Valid validation
+Controller -> Service: createExpense()
+Service -> Service: Set paidAmount for payer
+Service -> Repository: save()
+Repository -> JPA: INSERT expense
+JPA -> DB: INSERT INTO expenses
+DB --> JPA: Success
+JPA -> Repository: Expense
+Repository -> JPA: INSERT shares
+JPA -> DB: INSERT INTO expense_shares
+DB --> JPA: Success
+JPA --> Repository: Expense with shares
+Repository --> Service: Expense
+Service --> Controller: Expense
+Controller --> API: 201 Created
+API --> Services: JSON response
+Services -> Frontend: Navigate to /expenses
+Frontend -> Services: getExpensesByHousehold()
+Services -> API: GET /api/expenses/household/{id}
+API -> Controller: HTTP GET
+Controller -> Service: getExpensesByHousehold()
+Service -> Repository: findByHouseholdIdWithShares()
+Repository -> JPA: SELECT with JOIN
+JPA -> DB: SELECT expenses LEFT JOIN shares
+DB --> JPA: Result set
+JPA -> Repository: Expense list
+Repository --> Service: Expense list
+Service --> Controller: Expense list
+Controller --> API: 200 OK
+API --> Services: JSON response
+Services -> Frontend: Expense list
+Frontend -> Frontend: setState(expenses)
+Frontend -> User: Display expense list
+
+== Create Task Flow ==
+User -> Frontend: Add task form
+Frontend -> Services: taskService.createTask()
+Services -> API: POST /api/tasks
+API -> Controller: HTTP POST
+Controller -> Controller: @Valid validation
+Controller -> Service: createTask()
+Service -> Repository: save()
+Repository -> JPA: INSERT
+JPA -> DB: INSERT INTO tasks
+DB --> JPA: Success
+JPA --> Repository: Task
+Repository --> Service: Task
+Service --> Controller: Task
+Controller --> API: 201 Created
+API --> Services: JSON response
+Services -> Frontend: Navigate to /tasks
+Frontend -> Services: getTasks()
+Services -> API: GET /api/tasks
+API -> Controller: HTTP GET
+Controller -> Service: getAllTasks()
+Service -> Repository: findAll()
+Repository -> JPA: SELECT
+JPA -> DB: SELECT * FROM tasks
+DB --> JPA: Result set
+JPA -> Repository: Task list
+Repository --> Service: Task list
+Service --> Controller: Task list
+Controller --> API: 200 OK
+API --> Services: JSON response
+Services -> Frontend: Task list
+Frontend -> Frontend: setState(tasks)
+Frontend -> User: Display task list
+
+== Update Task Status Flow ==
+User -> Frontend: Toggle task checkbox
+Frontend -> Services: taskService.updateTask()
+Services -> API: PUT /api/tasks/{id}
+API -> Controller: HTTP PUT
+Controller -> Service: updateTask()
+Service -> Repository: findById()
+Repository -> JPA: SELECT
+JPA -> DB: SELECT
+DB --> JPA: Task
+JPA -> Repository: Task
+Repository --> Service: Task
+Service -> Service: Update status
+Service -> Repository: save()
+Repository -> JPA: UPDATE
+JPA -> DB: UPDATE
+DB --> JPA: Success
+JPA -> Repository: Updated Task
+Repository --> Service: Updated Task
+Service --> Controller: Updated Task
+Controller --> API: 200 OK
+API --> Services: JSON response
+Services -> Frontend: Updated task
+Frontend -> Frontend: Update state
+Frontend -> User: Task status changed
+
+== Error Handling Flow ==
+Services -> API: Request
+API -> Controller: Request
+Controller -> Service: Process
+Service -> Repository: Database operation
+Repository -> JPA: SQL
+JPA -> DB: Query
+DB --> JPA: Error
+JPA --> Repository: Exception
+Repository --> Service: Exception
+Service -> Controller: RuntimeException
+Controller -> API: Error response
+API --> Services: HTTP error
+Services -> Frontend: Error object
+Frontend -> Frontend: Display error message
+Frontend -> User: Error notification
+
+note right of Frontend
+  React + Vite
+  Port: 5173
+  State: useState, useEffect
+  Context: AuthContext, HouseholdContext
+end note
+
+note right of API
+  REST API
+  Base URL: localhost:8081
+  Format: JSON
+  Protocol: HTTP
+end note
+
+note right of DB
+  MySQL 8.0
+  Port: 8889 (MAMP)
+  Flyway migrations
+  Connection: HikariCP
+end note
+
+@enduml

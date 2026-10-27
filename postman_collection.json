@@ -1,0 +1,523 @@
+{
+	"info": {
+		"_postman_id": "cohabit-api-collection",
+		"name": "CoHabit API",
+		"description": "API REST for CoHabit application - CRUD operations for Households, Expenses, and Tasks",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Authentication",
+			"item": [
+				{
+					"name": "Register",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"John Doe\",\n  \"email\": \"john@example.com\",\n  \"password\": \"password123\"\n}"
+						},
+						"url": {
+							"raw": "http://localhost:8081/api/auth/register",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "8081",
+							"path": ["api", "auth", "register"]
+						}
+					}
+				},
+				{
+					"name": "Login",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"john@example.com\",\n  \"password\": \"password123\"\n}"
+						},
+						"url": {
+							"raw": "http://localhost:8081/api/auth/login",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "8081",
+							"path": ["api", "auth", "login"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Households",
+			"item": [
+				{
+					"name": "Get All Households",
+					"request": {
+						"method": "GET",
+						"url": {
+							"raw": "http://localhost:8081/api/households",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "8081",
+							"path": ["api", "households"]
+						}
+					}
+				},
+				{
+					"name": "Get Household by ID",
+					"request": {
+						"method": "GET",
+						"url": {
+							"raw": "http://localhost:8081/api/households/:householdId",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "8081",
+							"path": ["api", "households", ":householdId"],
+							"variable": [
+								{
+									"key": "householdId",
+									"value": "1"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Get Household Members",
+					"request": {
+						"method": "GET",
+						"url": {
+							"raw": "http://localhost:8081/api/households/:householdId/members",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "8081",
+							"path": ["api", "households", ":householdId", "members"],
+							"variable": [
+								{
+									"key": "householdId",
+									"value": "1"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Create Household",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"My House\",\n  \"userId\": 1\n}"
+						},
+						"url": {
+							"raw": "http://localhost:8081/api/households",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "8081",
+							"path": ["api", "households"]
+						}
+					}
+				},
+				{
+					"name": "Update Household",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Updated House Name\"\n}"
+						},
+						"url": {
+							"raw": "http://localhost:8081/api/households/:householdId",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "8081",
+							"path": ["api", "households", ":householdId"],
+							"variable": [
+								{
+									"key": "householdId",
+									"value": "1"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Delete Household",
+					"request": {
+						"method": "DELETE",
+						"url": {
+							"raw": "http://localhost:8081/api/households/:householdId",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "8081",
+							"path": ["api", "households", ":householdId"],
+							"variable": [
+								{
+									"key": "householdId",
+									"value": "1"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Join Household",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"inviteCode\": \"ABC123\",\n  \"userId\": 2\n}"
+						},
+						"url": {
+							"raw": "http://localhost:8081/api/households/join",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "8081",
+							"path": ["api", "households", "join"]
+						}
+					}
+				},
+				{
+					"name": "Leave Household",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"userId\": 2\n}"
+						},
+						"url": {
+							"raw": "http://localhost:8081/api/households/leave",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "8081",
+							"path": ["api", "households", "leave"]
+						}
+					}
+				},
+				{
+					"name": "Regenerate Invite Code",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "http://localhost:8081/api/households/:householdId/regenerate-code",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "8081",
+							"path": ["api", "households", ":householdId", "regenerate-code"],
+							"variable": [
+								{
+									"key": "householdId",
+									"value": "1"
+								}
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Expenses",
+			"item": [
+				{
+					"name": "Get All Expenses",
+					"request": {
+						"method": "GET",
+						"url": {
+							"raw": "http://localhost:8081/api/expenses",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "8081",
+							"path": ["api", "expenses"]
+						}
+					}
+				},
+				{
+					"name": "Get Expenses by Household",
+					"request": {
+						"method": "GET",
+						"url": {
+							"raw": "http://localhost:8081/api/expenses/household/:householdId",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "8081",
+							"path": ["api", "expenses", "household", ":householdId"],
+							"variable": [
+								{
+									"key": "householdId",
+									"value": "1"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Get Expense by ID",
+					"request": {
+						"method": "GET",
+						"url": {
+							"raw": "http://localhost:8081/api/expenses/:id",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "8081",
+							"path": ["api", "expenses", ":id"],
+							"variable": [
+								{
+									"key": "id",
+									"value": "1"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Create Expense",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"householdId\": 1,\n  \"payerId\": 1,\n  \"label\": \"Groceries\",\n  \"amount\": 150.50,\n  \"expenseDate\": \"2024-01-01\",\n  \"emoji\": \"🛒\",\n  \"shares\": [\n    {\n      \"userId\": 1,\n      \"shareAmount\": 75.25\n    },\n    {\n      \"userId\": 2,\n      \"shareAmount\": 75.25\n    }\n  ]\n}"
+						},
+						"url": {
+							"raw": "http://localhost:8081/api/expenses",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "8081",
+							"path": ["api", "expenses"]
+						}
+					}
+				},
+				{
+					"name": "Update Expense",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"householdId\": 1,\n  \"payerId\": 1,\n  \"label\": \"Updated Groceries\",\n  \"amount\": 200.00,\n  \"expenseDate\": \"2024-01-01\",\n  \"emoji\": \"🛒\",\n  \"shares\": [\n    {\n      \"userId\": 1,\n      \"shareAmount\": 100.00\n    },\n    {\n      \"userId\": 2,\n      \"shareAmount\": 100.00\n    }\n  ]\n}"
+						},
+						"url": {
+							"raw": "http://localhost:8081/api/expenses/:id",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "8081",
+							"path": ["api", "expenses", ":id"],
+							"variable": [
+								{
+									"key": "id",
+									"value": "1"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Delete Expense",
+					"request": {
+						"method": "DELETE",
+						"url": {
+							"raw": "http://localhost:8081/api/expenses/:id",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "8081",
+							"path": ["api", "expenses", ":id"],
+							"variable": [
+								{
+									"key": "id",
+									"value": "1"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Settle Expense Share",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"userId\": 2,\n  \"amount\": 75.25\n}"
+						},
+						"url": {
+							"raw": "http://localhost:8081/api/expenses/:id/settle",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "8081",
+							"path": ["api", "expenses", ":id", "settle"],
+							"variable": [
+								{
+									"key": "id",
+									"value": "1"
+								}
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Tasks",
+			"item": [
+				{
+					"name": "Get All Tasks",
+					"request": {
+						"method": "GET",
+						"url": {
+							"raw": "http://localhost:8081/api/tasks",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "8081",
+							"path": ["api", "tasks"]
+						}
+					}
+				},
+				{
+					"name": "Get Task by ID",
+					"request": {
+						"method": "GET",
+						"url": {
+							"raw": "http://localhost:8081/api/tasks/:id",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "8081",
+							"path": ["api", "tasks", ":id"],
+							"variable": [
+								{
+									"key": "id",
+									"value": "1"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Create Task",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"householdId\": 1,\n  \"name\": \"Clean kitchen\",\n  \"frequencyDays\": 7,\n  \"dueDate\": \"2024-01-01\",\n  \"status\": \"pending\",\n  \"assignedUserId\": 1,\n  \"rotationIndex\": 0\n}"
+						},
+						"url": {
+							"raw": "http://localhost:8081/api/tasks",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "8081",
+							"path": ["api", "tasks"]
+						}
+					}
+				},
+				{
+					"name": "Update Task",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"householdId\": 1,\n  \"name\": \"Clean kitchen\",\n  \"frequencyDays\": 7,\n  \"dueDate\": \"2024-01-01\",\n  \"status\": \"completed\",\n  \"assignedUserId\": 1,\n  \"rotationIndex\": 0\n}"
+						},
+						"url": {
+							"raw": "http://localhost:8081/api/tasks/:id",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "8081",
+							"path": ["api", "tasks", ":id"],
+							"variable": [
+								{
+									"key": "id",
+									"value": "1"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Delete Task",
+					"request": {
+						"method": "DELETE",
+						"url": {
+							"raw": "http://localhost:8081/api/tasks/:id",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "8081",
+							"path": ["api", "tasks", ":id"],
+							"variable": [
+								{
+									"key": "id",
+									"value": "1"
+								}
+							]
+						}
+					}
+				}
+			]
+		}
+	]
+}

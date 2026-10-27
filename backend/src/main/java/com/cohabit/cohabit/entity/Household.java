@@ -19,6 +19,11 @@ public class Household {
     @Column(name = "invite_code")
     private String inviteCode;
 
+    private Boolean suspended = false;
+
+    @Column(name = "suspended_at", insertable = false, updatable = false)
+    private LocalDateTime suspendedAt;
+
     @Column(name = "created_at", insertable = false, updatable = false)
     private LocalDateTime createdAt;
 
@@ -44,6 +49,12 @@ public class Household {
 
     public String getInviteCode() { return inviteCode; }
     public void setInviteCode(String inviteCode) { this.inviteCode = inviteCode; }
+
+    public Boolean getSuspended() { return suspended; }
+    public void setSuspended(Boolean suspended) { this.suspended = suspended; }
+
+    public LocalDateTime getSuspendedAt() { return suspendedAt; }
+    public void setSuspendedAt(LocalDateTime suspendedAt) { this.suspendedAt = suspendedAt; }
 
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }

@@ -11,7 +11,6 @@ import {
   EmptyState,
 } from '../../components/shared/SharedComponents';
 import {
-  MOCK_SHOPPING,
   calculateBalances,
   MOCK_SETTLEMENTS,
 } from '../../data/mockData';
@@ -22,7 +21,7 @@ export default function Dashboard() {
   const { household, members, getMemberById } = useHousehold();
   const navigate = useNavigate();
 
-  const [shopping, setShopping] = useState(MOCK_SHOPPING);
+  const [shopping, setShopping] = useState([]);
   const [tasks, setTasks] = useState([]);
   const [expenses, setExpenses] = useState([]);
 
@@ -69,6 +68,23 @@ export default function Dashboard() {
         setExpenses(mappedData);
       })
       .catch((err) => console.error('Failed to fetch expenses in dashboard', err));
+
+    if (householdId) {
+      fetch(`http://localhost:8081/api/shopping/household/${householdId}`)
+        .then(async (res) => {
+          const data = await res.json();
+          if (!res.ok || !Array.isArray(data)) {
+            throw new Error(data?.message || 'Failed to fetch shopping items');
+          }
+          const mappedData = data.map((s) => ({
+            ...s,
+            added_by: s.addedById || s.added_by,
+            created_at: s.createdAt || s.created_at,
+          }));
+          setShopping(mappedData);
+        })
+        .catch((err) => console.error('Failed to fetch shopping items in dashboard', err));
+    }
   }, [household?.id, user]);
 
   const hour = new Date().getHours();
@@ -101,9 +117,31 @@ export default function Dashboard() {
   };
 
   const toggleShop = (id) => {
-    setShopping((prev) =>
-      prev.map((s) => (s.id === id ? { ...s, purchased: !s.purchased } : s))
-    );
+    const item = shopping.find((s) => s.id === id);
+    if (!item) return;
+
+    const newPurchased = !item.purchased;
+
+    fetch(`http://localhost:8081/api/shopping/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        householdId: item.household_id,
+        name: item.name,
+        purchased: newPurchased,
+        addedById: item.added_by,
+      }),
+    })
+      .then(async (res) => {
+        const data = await res.json();
+        if (!res.ok) {
+          throw new Error(data?.message || 'Failed to update shopping item');
+        }
+        setShopping((prev) =>
+          prev.map((s) => (s.id === id ? { ...s, purchased: newPurchased } : s))
+        );
+      })
+      .catch((err) => console.error('Failed to toggle shopping item', err));
   };
 
   return (

@@ -21,6 +21,13 @@ public class User {
 
     private String color = "#4F46E5";
 
+    private String role = "USER";
+
+    private Boolean suspended = false;
+
+    @Column(name = "suspended_at", insertable = false, updatable = false)
+    private LocalDateTime suspendedAt;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "household_id")
     @JsonIgnore
@@ -44,6 +51,15 @@ public class User {
 
     public String getColor() { return color; }
     public void setColor(String color) { this.color = color; }
+
+    public String getRole() { return role; }
+    public void setRole(String role) { this.role = role; }
+
+    public Boolean getSuspended() { return suspended; }
+    public void setSuspended(Boolean suspended) { this.suspended = suspended; }
+
+    public LocalDateTime getSuspendedAt() { return suspendedAt; }
+    public void setSuspendedAt(LocalDateTime suspendedAt) { this.suspendedAt = suspendedAt; }
 
     public Household getHousehold() { return household; }
     public void setHousehold(Household household) { this.household = household; }

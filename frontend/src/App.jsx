@@ -20,6 +20,7 @@ import Profile from './pages/app/Profile';
 import HouseholdSettings from './pages/app/HouseholdSettings';
 import HouseholdCreate from './pages/household/HouseholdCreate';
 import HouseholdJoin from './pages/household/HouseholdJoin';
+import AdminLogin from './pages/admin/AdminLogin';
 import './App.css';
 
 function App() {
@@ -32,6 +33,7 @@ function App() {
             <Route path="/" element={<Home />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
+            <Route path="/admin/login" element={<AdminLogin />} />
 
             {/* Household onboarding */}
             <Route path="/household/create" element={<HouseholdCreate />} />

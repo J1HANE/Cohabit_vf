@@ -233,6 +233,40 @@ Base URL: `http://localhost:8081`
 
 ---
 
+## Shopping Items
+
+### Get All Shopping Items
+- **GET** `/api/shopping`
+- **Response:** Array of shopping items
+
+### Get Shopping Items by Household
+- **GET** `/api/shopping/household/{householdId}`
+- **Response:** Array of shopping items for the household
+
+### Create Shopping Item
+- **POST** `/api/shopping`
+- **Body:**
+  ```json
+  {
+    "householdId": 1,
+    "name": "Milk",
+    "purchased": false,
+    "addedById": 1
+  }
+  ```
+- **Response:** Created shopping item object
+
+### Update Shopping Item
+- **PUT** `/api/shopping/{id}`
+- **Body:** Same as create
+- **Response:** Updated shopping item object
+
+### Delete Shopping Item
+- **DELETE** `/api/shopping/{id}`
+- **Response:** 204 No Content
+
+---
+
 ## Tasks
 
 ### Get All Tasks
