@@ -1,11 +1,14 @@
 package com.cohabit.cohabit.controller;
 
 import com.cohabit.cohabit.entity.Household;
+import com.cohabit.cohabit.entity.Complaint;
 import com.cohabit.cohabit.entity.User;
+import com.cohabit.cohabit.repository.ComplaintRepository;
 import com.cohabit.cohabit.repository.HouseholdRepository;
 import com.cohabit.cohabit.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
@@ -13,6 +16,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 @RestController
 @RequestMapping("/api/admin")
@@ -20,11 +24,13 @@ public class AdminController {
 
     private final UserRepository userRepository;
     private final HouseholdRepository householdRepository;
+    private final ComplaintRepository complaintRepository;
 
     @Autowired
-    public AdminController(UserRepository userRepository, HouseholdRepository householdRepository) {
+    public AdminController(UserRepository userRepository, HouseholdRepository householdRepository, ComplaintRepository complaintRepository) {
         this.userRepository = userRepository;
         this.householdRepository = householdRepository;
+        this.complaintRepository = complaintRepository;
     }
 
     // ==================== USER MANAGEMENT ====================
@@ -156,6 +162,63 @@ public class AdminController {
         return ResponseEntity.notFound().build();
     }
 
+    // ==================== COMPLAINT MANAGEMENT ====================
+
+    @GetMapping("/complaints")
+    public ResponseEntity<?> getComplaints(@RequestParam(defaultValue = "ALL") String status) {
+        String normalizedStatus = status.toUpperCase();
+        if (!Set.of("ALL", "OPEN", "IN_REVIEW", "RESOLVED").contains(normalizedStatus)) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Invalid complaint status"));
+        }
+        List<Complaint> complaints = complaintRepository.findAllWithUser();
+        return ResponseEntity.ok(complaints.stream()
+                .filter(complaint -> normalizedStatus.equals("ALL") || complaint.getStatus().equals(normalizedStatus))
+                .map(this::toComplaintResponse)
+                .toList());
+    }
+
+    @Transactional
+    @PutMapping("/complaints/{id}")
+    public ResponseEntity<?> updateComplaint(@PathVariable Long id, @RequestBody Map<String, String> updates) {
+        Complaint complaint = complaintRepository.findWithUserById(id).orElse(null);
+        if (complaint == null) {
+            return ResponseEntity.notFound().build();
+        }
+
+        if (updates.containsKey("status")) {
+            String status = updates.get("status").toUpperCase();
+            if (!Set.of("OPEN", "IN_REVIEW", "RESOLVED").contains(status)) {
+                return ResponseEntity.badRequest().body(Map.of("error", "Invalid complaint status"));
+            }
+            complaint.setStatus(status);
+        }
+        if (updates.containsKey("adminResponse")) {
+            String response = updates.get("adminResponse").trim();
+            if (response.length() > 5000) {
+                return ResponseEntity.badRequest().body(Map.of("error", "Response must be 5000 characters or fewer"));
+            }
+            complaint.setAdminResponse(response.isEmpty() ? null : response);
+        }
+
+        return ResponseEntity.ok(toComplaintResponse(complaintRepository.save(complaint)));
+    }
+
+    private Map<String, Object> toComplaintResponse(Complaint complaint) {
+        Map<String, Object> response = new HashMap<>();
+        response.put("id", complaint.getId());
+        response.put("userId", complaint.getUserId());
+        response.put("userName", complaint.getUser().getName());
+        response.put("userEmail", complaint.getUser().getEmail());
+        response.put("category", complaint.getCategory());
+        response.put("subject", complaint.getSubject());
+        response.put("description", complaint.getDescription());
+        response.put("status", complaint.getStatus());
+        response.put("adminResponse", complaint.getAdminResponse());
+        response.put("createdAt", complaint.getCreatedAt());
+        response.put("updatedAt", complaint.getUpdatedAt());
+        return response;
+    }
+
     // ==================== PLATFORM STATISTICS ====================
 
     @GetMapping("/stats")
@@ -175,6 +238,10 @@ public class AdminController {
         stats.put("activeHouseholds", activeHouseholds);
         stats.put("suspendedUsers", suspendedUsers);
         stats.put("suspendedHouseholds", suspendedHouseholds);
+        stats.put("totalComplaints", complaintRepository.count());
+        stats.put("openComplaints", complaintRepository.countByStatus("OPEN"));
+        stats.put("inReviewComplaints", complaintRepository.countByStatus("IN_REVIEW"));
+        stats.put("resolvedComplaints", complaintRepository.countByStatus("RESOLVED"));
 
         return stats;
     }
@@ -187,9 +254,11 @@ public class AdminController {
         LocalDateTime weekAgo = LocalDateTime.now().minusDays(7);
         long newUsersLastWeek = userRepository.countByCreatedAtAfter(weekAgo);
         long newHouseholdsLastWeek = householdRepository.countByCreatedAtAfter(weekAgo);
+        long newComplaintsLastWeek = complaintRepository.countByCreatedAtAfter(weekAgo);
 
         stats.put("newUsersLastWeek", newUsersLastWeek);
         stats.put("newHouseholdsLastWeek", newHouseholdsLastWeek);
+        stats.put("newComplaintsLastWeek", newComplaintsLastWeek);
 
         return stats;
     }

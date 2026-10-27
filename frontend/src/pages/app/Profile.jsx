@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { PageHeader, AppButton, HouseholdMemberAvatar } from '../../components/shared/SharedComponents';
 import { useAuth } from '../../context/AuthContext';
+import { complaintService } from '../../services/complaintService';
 import './Profile.css';
 
 const COLORS = [
@@ -19,6 +20,20 @@ export default function Profile() {
   const [saved, setSaved] = useState(false);
   const [pwError, setPwError] = useState('');
   const [pwSaved, setPwSaved] = useState(false);
+  const [complaints, setComplaints] = useState([]);
+  const [complaintForm, setComplaintForm] = useState({ category: 'ACCOUNT', subject: '', description: '' });
+  const [complaintError, setComplaintError] = useState('');
+  const [complaintLoading, setComplaintLoading] = useState(false);
+  const [complaintSaved, setComplaintSaved] = useState(false);
+
+  useEffect(() => {
+    if (!user?.id) return undefined;
+    let active = true;
+    complaintService.getMine(user.id)
+      .then((data) => { if (active) setComplaints(data); })
+      .catch((error) => { if (active) setComplaintError(error.message); });
+    return () => { active = false; };
+  }, [user?.id]);
 
   const handleSave = (e) => {
     e.preventDefault();
@@ -42,6 +57,23 @@ export default function Profile() {
     setPwSaved(true);
     setPwForm({ current: '', newPw: '', confirm: '' });
     setTimeout(() => setPwSaved(false), 2000);
+  };
+
+  const handleComplaintSubmit = async (event) => {
+    event.preventDefault();
+    setComplaintError('');
+    setComplaintSaved(false);
+    setComplaintLoading(true);
+    try {
+      const complaint = await complaintService.create({ ...complaintForm, userId: user.id });
+      setComplaints((current) => [complaint, ...current]);
+      setComplaintForm({ category: 'ACCOUNT', subject: '', description: '' });
+      setComplaintSaved(true);
+    } catch (error) {
+      setComplaintError(error.message);
+    } finally {
+      setComplaintLoading(false);
+    }
   };
 
   return (
@@ -110,6 +142,49 @@ export default function Profile() {
       </div>
 
       {/* Password change */}
+      <div className="app-card profile-card">
+        <h3 className="profile-section-title">Contact support</h3>
+        <p className="support-intro">Send a complaint or report a problem. You can follow its progress here.</p>
+        {complaintError && <p className="support-message is-error" role="alert">{complaintError}</p>}
+        {complaintSaved && <p className="support-message is-success" role="status">Your complaint was sent to the support team.</p>}
+        <form className="app-form" onSubmit={handleComplaintSubmit}>
+          <div className="app-form-group">
+            <label className="app-form-label" htmlFor="complaint-category">Category</label>
+            <select id="complaint-category" className="app-form-select" value={complaintForm.category} onChange={(event) => setComplaintForm((current) => ({ ...current, category: event.target.value }))}>
+              <option value="ACCOUNT">Account</option>
+              <option value="HOUSEHOLD">Household</option>
+              <option value="PAYMENT">Payments</option>
+              <option value="BUG">Technical issue</option>
+              <option value="OTHER">Other</option>
+            </select>
+          </div>
+          <div className="app-form-group">
+            <label className="app-form-label" htmlFor="complaint-subject">Subject</label>
+            <input id="complaint-subject" className="app-form-input" minLength="5" maxLength="120" required value={complaintForm.subject} onChange={(event) => setComplaintForm((current) => ({ ...current, subject: event.target.value }))} placeholder="A short summary" />
+          </div>
+          <div className="app-form-group">
+            <label className="app-form-label" htmlFor="complaint-description">Details</label>
+            <textarea id="complaint-description" className="app-form-textarea" minLength="20" maxLength="5000" required value={complaintForm.description} onChange={(event) => setComplaintForm((current) => ({ ...current, description: event.target.value }))} placeholder="Describe what happened and what you expected." />
+            <span className="support-character-count">{complaintForm.description.length}/5000</span>
+          </div>
+          <AppButton type="submit" variant="primary" size="md" disabled={complaintLoading}>
+            {complaintLoading ? 'Sending...' : 'Send complaint'}
+          </AppButton>
+        </form>
+        <div className="support-history">
+          <h4 className="profile-section-title">Your requests</h4>
+          {complaints.length === 0 ? <p className="support-empty">No support requests yet.</p> : complaints.map((complaint) => (
+            <article className="support-request" key={complaint.id}>
+              <div className="support-request-heading">
+                <div><strong>{complaint.subject}</strong><span>{complaint.category} · {complaint.createdAt ? new Date(complaint.createdAt).toLocaleDateString() : 'Just now'}</span></div>
+                <span className={`support-status status-${complaint.status.toLowerCase()}`}>{complaint.status.replace('_', ' ')}</span>
+              </div>
+              {complaint.adminResponse && <p className="support-admin-response">{complaint.adminResponse}</p>}
+            </article>
+          ))}
+        </div>
+      </div>
+
       <div className="app-card profile-card">
         <h3 className="profile-section-title">Change Password</h3>
         {pwError && (

@@ -23,6 +23,12 @@ import Notifications from './pages/app/Notifications';
 import HouseholdCreate from './pages/household/HouseholdCreate';
 import HouseholdJoin from './pages/household/HouseholdJoin';
 import AdminLogin from './pages/admin/AdminLogin';
+import AdminLayout from './pages/admin/AdminLayout';
+import AdminDashboard from './pages/admin/AdminDashboard';
+import AdminUsers from './pages/admin/AdminUsers';
+import AdminHouseholds from './pages/admin/AdminHouseholds';
+import AdminStatistics from './pages/admin/AdminStatistics';
+import AdminComplaints from './pages/admin/AdminComplaints';
 import './App.css';
 
 function App() {
@@ -37,6 +43,16 @@ function App() {
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/admin/login" element={<AdminLogin />} />
+
+            {/* Protected admin routes */}
+            <Route path="/admin" element={<AdminLayout />}>
+              <Route index element={<Navigate to="dashboard" replace />} />
+              <Route path="dashboard" element={<AdminDashboard />} />
+              <Route path="users" element={<AdminUsers />} />
+              <Route path="households" element={<AdminHouseholds />} />
+              <Route path="complaints" element={<AdminComplaints />} />
+              <Route path="statistics" element={<AdminStatistics />} />
+            </Route>
 
             {/* Household onboarding */}
             <Route path="/household/create" element={<HouseholdCreate />} />
