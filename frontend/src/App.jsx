@@ -2,6 +2,7 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { HouseholdProvider } from './context/HouseholdContext';
+import { NotificationProvider } from './context/NotificationContext';
 import AppLayout from './components/AppLayout/AppLayout';
 import Home from './pages/Home';
 import Login from './pages/Login';
@@ -18,6 +19,7 @@ import SettlementNew from './pages/app/SettlementNew';
 import Shopping from './pages/app/Shopping';
 import Profile from './pages/app/Profile';
 import HouseholdSettings from './pages/app/HouseholdSettings';
+import Notifications from './pages/app/Notifications';
 import HouseholdCreate from './pages/household/HouseholdCreate';
 import HouseholdJoin from './pages/household/HouseholdJoin';
 import AdminLogin from './pages/admin/AdminLogin';
@@ -27,7 +29,8 @@ function App() {
   return (
     <AuthProvider>
       <HouseholdProvider>
-        <Router>
+        <NotificationProvider>
+          <Router>
           <Routes>
             {/* Public routes */}
             <Route path="/" element={<Home />} />
@@ -53,12 +56,14 @@ function App() {
               <Route path="shopping" element={<Shopping />} />
               <Route path="profile" element={<Profile />} />
               <Route path="household/settings" element={<HouseholdSettings />} />
+              <Route path="notifications" element={<Notifications />} />
             </Route>
 
             {/* Fallback */}
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </Router>
+        </NotificationProvider>
       </HouseholdProvider>
     </AuthProvider>
   );

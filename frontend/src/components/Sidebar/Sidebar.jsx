@@ -1,7 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useHousehold } from '../../context/HouseholdContext';
+import { useNotifications } from '../../context/NotificationContext';
+import NotificationPopup from '../NotificationPopup/NotificationPopup';
 import './Sidebar.css';
 
 const navItems = [
@@ -15,6 +17,8 @@ const navItems = [
 export default function Sidebar({ onClose }) {
   const { user, logout } = useAuth();
   const { household } = useHousehold();
+  const { unreadCount } = useNotifications();
+  const [showNotifications, setShowNotifications] = useState(false);
   const navigate = useNavigate();
 
   const handleLogout = () => {
@@ -57,7 +61,27 @@ export default function Sidebar({ onClose }) {
             <span className="nav-item-label">{item.label}</span>
           </NavLink>
         ))}
+
+        <button
+          type="button"
+          className={`sidebar-nav-item sidebar-notification-btn${showNotifications ? ' active' : ''}`}
+          onClick={() => setShowNotifications(!showNotifications)}
+          aria-label="Ouvrir les notifications"
+        >
+          <span className="nav-item-icon">🔔</span>
+          <span className="nav-item-label">Notifications</span>
+          {unreadCount > 0 && (
+            <span className="sidebar-unread-pill">
+              {unreadCount > 99 ? '99+' : unreadCount}
+            </span>
+          )}
+        </button>
       </nav>
+
+      <NotificationPopup
+        isOpen={showNotifications}
+        onClose={() => setShowNotifications(false)}
+      />
 
       {/* Bottom section */}
       <div className="sidebar-bottom">

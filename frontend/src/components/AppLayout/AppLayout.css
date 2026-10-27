@@ -31,6 +31,7 @@
   top: 0;
   height: 100vh;
   flex-shrink: 0;
+  z-index: 1000;
 }
 
 .sidebar-overlay {
@@ -146,3 +147,37 @@
     padding: 1.5rem;
   }
 }
+
+.mobile-notif-btn {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  font-size: 1.25rem;
+  color: #fff;
+  border-radius: 10px;
+  transition: background 0.15s ease;
+}
+
+.mobile-notif-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.mobile-notif-badge {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  background: #a8d5c4;
+  color: #080f16;
+  font-size: 0.65rem;
+  font-weight: 700;
+  padding: 0.08rem 0.35rem;
+  border-radius: 100px;
+  line-height: 1.1;
+}
+

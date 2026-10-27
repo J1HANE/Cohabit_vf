@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { PageHeader, AppButton, HouseholdMemberAvatar } from '../../components/shared/SharedComponents';
 import { useAuth } from '../../context/AuthContext';
 import { useHousehold } from '../../context/HouseholdContext';
+import { useNotifications } from '../../context/NotificationContext';
 import './ExpenseNew.css';
 
 const EMOJIS = ['🛒', '🍕', '⚡', '📡', '🏠', '🚗', '💊', '🎉', '☕', '🍔', '💸'];
@@ -11,6 +12,7 @@ export default function ExpenseNew() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { household, members } = useHousehold();
+  const { fetchNotifications } = useNotifications();
 
   const [form, setForm] = useState({
     label: '',
@@ -154,6 +156,7 @@ export default function ExpenseNew() {
         body: JSON.stringify(payload),
       });
       if (res.ok) {
+        await fetchNotifications();
         navigate('/expenses');
       } else {
         const err = await res.json().catch(() => ({}));

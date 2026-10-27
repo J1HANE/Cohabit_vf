@@ -12,10 +12,12 @@ import java.util.Optional;
 public class TaskService {
 
     private final TaskRepository taskRepository;
+    private final NotificationService notificationService;
 
     @Autowired
-    public TaskService(TaskRepository taskRepository) {
+    public TaskService(TaskRepository taskRepository, NotificationService notificationService) {
         this.taskRepository = taskRepository;
+        this.notificationService = notificationService;
     }
 
     public List<Task> getAllTasks() {
@@ -27,7 +29,25 @@ public class TaskService {
     }
 
     public Task createTask(Task task) {
-        return taskRepository.save(task);
+        Task saved = taskRepository.save(task);
+
+        try {
+            if (saved.getHouseholdId() != null) {
+                String msg = "Une nouvelle tâche a été ajoutée : '" + saved.getName() + "'";
+                notificationService.notifyHouseholdMembers(
+                        saved.getHouseholdId(),
+                        null,
+                        "Nouvelle tâche",
+                        msg,
+                        "TASK",
+                        "/tasks"
+                );
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return saved;
     }
 
     public Task updateTask(Long id, Task taskDetails) {

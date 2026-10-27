@@ -96,6 +96,25 @@
   color: #a8d5c4;
 }
 
+.sidebar-notification-btn {
+  background: none;
+  border: none;
+  width: 100%;
+  font-family: inherit;
+  text-align: left;
+}
+
+.sidebar-unread-pill {
+  margin-left: auto;
+  background: #a8d5c4;
+  color: #080f16;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 0.12rem 0.5rem;
+  border-radius: 100px;
+  line-height: 1.2;
+}
+
 .nav-item-icon {
   font-size: 1.1rem;
   flex-shrink: 0;

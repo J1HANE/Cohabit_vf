@@ -13,10 +13,16 @@ import java.util.Optional;
 public class ExpenseService {
 
     private final ExpenseRepository expenseRepository;
+    private final NotificationService notificationService;
+    private final com.cohabit.cohabit.repository.UserRepository userRepository;
 
     @Autowired
-    public ExpenseService(ExpenseRepository expenseRepository) {
+    public ExpenseService(ExpenseRepository expenseRepository,
+                          NotificationService notificationService,
+                          com.cohabit.cohabit.repository.UserRepository userRepository) {
         this.expenseRepository = expenseRepository;
+        this.notificationService = notificationService;
+        this.userRepository = userRepository;
     }
 
     @Transactional(readOnly = true)
@@ -46,7 +52,29 @@ public class ExpenseService {
                 }
             });
         }
-        return expenseRepository.save(expense);
+        Expense saved = expenseRepository.save(expense);
+
+        // Keep notification creation in the expense transaction. If it fails,
+        // surface the failure instead of silently saving an expense with no alert.
+        if (saved.getHouseholdId() != null) {
+            String payerName = "Un colocataire";
+            if (saved.getPayerId() != null) {
+                payerName = userRepository.findById(saved.getPayerId())
+                        .map(com.cohabit.cohabit.entity.User::getName)
+                        .orElse("Un colocataire");
+            }
+            String msg = payerName + " a ajouté la dépense '" + saved.getLabel() + "' (" + saved.getAmount() + " MAD)";
+            notificationService.notifyHouseholdMembers(
+                    saved.getHouseholdId(),
+                    null,
+                    "Nouvelle dépense",
+                    msg,
+                    "EXPENSE",
+                    "/expenses/" + saved.getId()
+            );
+        }
+
+        return saved;
     }
 
     @Transactional
