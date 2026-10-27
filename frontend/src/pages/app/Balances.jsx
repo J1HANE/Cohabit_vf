@@ -8,7 +8,7 @@ import {
   BalanceCard,
   HouseholdMemberAvatar,
 } from '../../components/shared/SharedComponents';
-import { calculateBalances, MOCK_SETTLEMENTS } from '../../data/mockData';
+import { calculateBalances } from '../../data/mockData';
 import './Balances.css';
 
 export default function Balances() {
@@ -16,6 +16,7 @@ export default function Balances() {
   const { user } = useAuth();
   const { household, members } = useHousehold();
   const [expenses, setExpenses] = useState([]);
+  const [settlements, setSettlements] = useState([]);
   const currentUserId = user?.id;
 
   useEffect(() => {
@@ -46,7 +47,28 @@ export default function Balances() {
       .catch((err) => console.error('Failed to fetch expenses in Balances', err));
   }, [household?.id, user]);
 
-  const balances = calculateBalances(expenses, MOCK_SETTLEMENTS, currentUserId, members);
+  useEffect(() => {
+    const householdId = household?.id || user?.householdId || user?.household_id;
+    if (householdId) {
+      fetch(`http://localhost:8081/api/settlements/household/${householdId}`)
+        .then(async (res) => {
+          const data = await res.json();
+          if (!res.ok || !Array.isArray(data)) {
+            throw new Error(data?.message || 'Failed to fetch settlements');
+          }
+          const mappedData = data.map((s) => ({
+            ...s,
+            from_user_id: s.fromUserId || s.from_user_id,
+            to_user_id: s.toUserId || s.to_user_id,
+            settled_at: s.settledAt || s.settled_at,
+          }));
+          setSettlements(mappedData);
+        })
+        .catch((err) => console.error('Failed to fetch settlements in Balances', err));
+    }
+  }, [household?.id, user]);
+
+  const balances = calculateBalances(expenses, settlements, currentUserId, members);
   const myBalance = currentUserId ? (balances[currentUserId] || 0) : 0;
 
   // Simple debt pairs from balance

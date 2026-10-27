@@ -31,10 +31,31 @@ export default function SettlementNew() {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    // TODO: POST /api/settlements
-    console.log('New settlement:', form);
-    setSuccess(true);
-    setTimeout(() => navigate('/settlements'), 1500);
+    const householdId = user?.householdId || user?.household_id;
+    const payload = {
+      householdId: householdId,
+      fromUserId: form.from_user_id,
+      toUserId: form.to_user_id,
+      amount: parseFloat(form.amount),
+    };
+
+    fetch('http://localhost:8081/api/settlements', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    })
+      .then(async (res) => {
+        const data = await res.json();
+        if (!res.ok) {
+          throw new Error(data?.message || 'Failed to create settlement');
+        }
+        setSuccess(true);
+        setTimeout(() => navigate('/settlements'), 1500);
+      })
+      .catch((err) => {
+        console.error('Failed to create settlement', err);
+        alert('Failed to create settlement. Please try again.');
+      });
   };
 
   return (

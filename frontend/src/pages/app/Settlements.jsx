@@ -1,13 +1,36 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { PageHeader, AppButton } from '../../components/shared/SharedComponents';
 import { useHousehold } from '../../context/HouseholdContext';
-import { MOCK_SETTLEMENTS } from '../../data/mockData';
+import { useAuth } from '../../context/AuthContext';
 import './Settlements.css';
 
 export default function Settlements() {
   const navigate = useNavigate();
   const { getMemberById } = useHousehold();
+  const { user } = useAuth();
+  const [settlements, setSettlements] = useState([]);
+
+  useEffect(() => {
+    const householdId = user?.householdId || user?.household_id;
+    if (householdId) {
+      fetch(`http://localhost:8081/api/settlements/household/${householdId}`)
+        .then(async (res) => {
+          const data = await res.json();
+          if (!res.ok || !Array.isArray(data)) {
+            throw new Error(data?.message || 'Failed to fetch settlements');
+          }
+          const mappedData = data.map((s) => ({
+            ...s,
+            from_user_id: s.fromUserId || s.from_user_id,
+            to_user_id: s.toUserId || s.to_user_id,
+            settled_at: s.settledAt || s.settled_at,
+          }));
+          setSettlements(mappedData);
+        })
+        .catch((err) => console.error('Failed to fetch settlements', err));
+    }
+  }, [user]);
 
   return (
     <div className="settlements-page page-fade">
@@ -15,13 +38,22 @@ export default function Settlements() {
         title="Settlements"
         subtitle="Payment history between roommates"
         action={
-          <AppButton
-            variant="primary"
-            size="md"
-            onClick={() => navigate('/settlements/new')}
-          >
-            Settle a debt
-          </AppButton>
+          <div style={{ display: 'flex', gap: '0.5rem' }}>
+            <AppButton
+              variant="ghost"
+              size="md"
+              onClick={() => navigate('/balances')}
+            >
+              Back to Balances
+            </AppButton>
+            <AppButton
+              variant="primary"
+              size="md"
+              onClick={() => navigate('/settlements/new')}
+            >
+              Settle a debt
+            </AppButton>
+          </div>
         }
       />
 
@@ -30,12 +62,12 @@ export default function Settlements() {
       </div>
 
       <div className="settlements-list">
-        {MOCK_SETTLEMENTS.length === 0 ? (
+        {settlements.length === 0 ? (
           <div className="app-card" style={{ textAlign: 'center', padding: '3rem', color: 'rgba(255,255,255,0.5)' }}>
             No settlements yet.
           </div>
         ) : (
-          MOCK_SETTLEMENTS.map((s) => {
+          settlements.map((s) => {
             const from = getMemberById(s.from_user_id);
             const to = getMemberById(s.to_user_id);
             return (
