@@ -35,6 +35,7 @@ Base URL: `http://localhost:8081`
   ```json
   {
     "message": "Login successful",
+    "token": "<bearer-token>",
     "id": 1,
     "name": "John Doe",
     "email": "john@example.com",
@@ -311,6 +312,7 @@ Base URL: `http://localhost:8081`
 - `204 No Content` - Successful request with no response body
 - `400 Bad Request` - Invalid request data
 - `401 Unauthorized` - Authentication required
+- `403 Forbidden` - Authenticated user lacks permission
 - `404 Not Found` - Resource not found
 - `500 Internal Server Error` - Server error
 
@@ -318,5 +320,23 @@ Base URL: `http://localhost:8081`
 
 - All datetime fields use ISO 8601 format
 - Monetary values use DECIMAL(12, 2) format
+- Every endpoint except `/api/auth/register` and `/api/auth/login` requires `Authorization: Bearer <token>`.
+- Login tokens expire after seven days. Set `COHABIT_AUTH_SECRET` to a random secret of at least 32 bytes before deployment.
+
+## Finalized Feature Routes
+
+- `PUT /api/expenses/{id}` and `DELETE /api/expenses/{id}` are restricted to the authenticated creator. Expense shares must add up to the expense total.
+- `POST /api/tasks/{id}/complete` completes a task only when called by its assigned member. The generic `PUT` route cannot change task status.
+- `POST /api/shopping/{id}/purchase` accepts `{ "price": 42.50 }`; it records the purchase and creates an evenly split household expense in the same transaction.
+- `DELETE /api/households/{householdId}/members/{memberId}` removes a member; `PUT /api/households/{householdId}/administrator/{memberId}` transfers household administration. Only the current household administrator may rename the household, change its administrator, remove members, or regenerate its invite code.
+- `POST /api/complaints` accepts category `USER_REPORT` with `reportedUserId`. Reports are limited to members of the reporter's household.
+- `POST /api/upload` accepts image or PDF receipts up to 10 MB and requires authentication.
+
+## Runtime Configuration
+
+- `COHABIT_AUTH_SECRET`: signing secret for authentication tokens; set a unique value outside development.
+- `COHABIT_ADMIN_EMAIL` and `COHABIT_ADMIN_PASSWORD`: optionally create/promote the platform administrator at startup. The password must have at least eight characters.
+- `COHABIT_MAIL_ENABLED=true`, `COHABIT_MAIL_FROM`, and standard `SPRING_MAIL_HOST`, `SPRING_MAIL_PORT`, `SPRING_MAIL_USERNAME`, and `SPRING_MAIL_PASSWORD` settings enable email notifications. Email remains disabled by default.
+- Flyway applies migration `V7__household_ownership_and_purchase_expenses.sql` automatically.
 - All requests use JSON content type
 - The API is currently in development mode without proper authentication middleware
