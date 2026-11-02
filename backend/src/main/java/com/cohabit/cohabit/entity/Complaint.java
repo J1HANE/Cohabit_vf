@@ -17,6 +17,11 @@ public class Complaint {
     @JsonIgnore
     private User user;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "reported_user_id")
+    @JsonIgnore
+    private User reportedUser;
+
     @Column(nullable = false, length = 32)
     private String category;
 
@@ -45,6 +50,10 @@ public class Complaint {
     public void setUser(User user) { this.user = user; }
 
     public Long getUserId() { return user != null ? user.getId() : null; }
+
+    public User getReportedUser() { return reportedUser; }
+    public void setReportedUser(User reportedUser) { this.reportedUser = reportedUser; }
+    public Long getReportedUserId() { return reportedUser != null ? reportedUser.getId() : null; }
 
     public String getCategory() { return category; }
     public void setCategory(String category) { this.category = category; }

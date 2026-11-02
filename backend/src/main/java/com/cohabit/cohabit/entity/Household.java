@@ -19,6 +19,11 @@ public class Household {
     @Column(name = "invite_code")
     private String inviteCode;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "administrator_id")
+    @JsonIgnore
+    private User administrator;
+
     private Boolean suspended = false;
 
     @Column(name = "suspended_at", insertable = false, updatable = false)
@@ -49,6 +54,19 @@ public class Household {
 
     public String getInviteCode() { return inviteCode; }
     public void setInviteCode(String inviteCode) { this.inviteCode = inviteCode; }
+
+    public User getAdministrator() { return administrator; }
+    public void setAdministrator(User administrator) { this.administrator = administrator; }
+    public Long getAdministratorId() { return administrator != null ? administrator.getId() : null; }
+    public void setAdministratorId(Long administratorId) {
+        if (administratorId == null) {
+            this.administrator = null;
+        } else {
+            User user = new User();
+            user.setId(administratorId);
+            this.administrator = user;
+        }
+    }
 
     public Boolean getSuspended() { return suspended; }
     public void setSuspended(Boolean suspended) { this.suspended = suspended; }

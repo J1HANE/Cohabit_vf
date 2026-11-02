@@ -5,6 +5,7 @@ import com.cohabit.cohabit.entity.User;
 import com.cohabit.cohabit.repository.NotificationRepository;
 import com.cohabit.cohabit.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -16,11 +17,14 @@ public class NotificationService {
 
     private final NotificationRepository notificationRepository;
     private final UserRepository userRepository;
+    private final ObjectProvider<MailNotificationService> mailNotificationService;
 
     @Autowired
-    public NotificationService(NotificationRepository notificationRepository, UserRepository userRepository) {
+    public NotificationService(NotificationRepository notificationRepository, UserRepository userRepository,
+                               ObjectProvider<MailNotificationService> mailNotificationService) {
         this.notificationRepository = notificationRepository;
         this.userRepository = userRepository;
+        this.mailNotificationService = mailNotificationService;
     }
 
     @Transactional(readOnly = true)
@@ -34,8 +38,9 @@ public class NotificationService {
     }
 
     @Transactional
-    public Optional<Notification> markAsRead(Long notificationId) {
-        return notificationRepository.findById(notificationId).map(notif -> {
+    public Optional<Notification> markAsRead(Long notificationId, Long userId) {
+        return notificationRepository.findById(notificationId)
+                .filter(notif -> userId.equals(notif.getUserId())).map(notif -> {
             notif.setIsRead(true);
             return notificationRepository.save(notif);
         });
@@ -60,7 +65,10 @@ public class NotificationService {
         notif.setType(type);
         notif.setLink(link);
         notif.setIsRead(false);
-        return notificationRepository.save(notif);
+        Notification saved = notificationRepository.save(notif);
+        userRepository.findById(userId).ifPresent(user ->
+            mailNotificationService.ifAvailable(mail -> mail.sendNotification(user, title, message)));
+        return saved;
     }
 
     @Transactional
@@ -75,7 +83,12 @@ public class NotificationService {
     }
 
     @Transactional
-    public void deleteNotification(Long id) {
-        notificationRepository.deleteById(id);
+    public boolean deleteNotification(Long id, Long userId) {
+        return notificationRepository.findById(id)
+                .filter(notification -> userId.equals(notification.getUserId()))
+                .map(notification -> {
+                    notificationRepository.delete(notification);
+                    return true;
+                }).orElse(false);
     }
 }

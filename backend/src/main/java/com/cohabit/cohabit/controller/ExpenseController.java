@@ -4,6 +4,7 @@ import com.cohabit.cohabit.entity.Expense;
 import com.cohabit.cohabit.service.ExpenseService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import jakarta.validation.Valid;
 
@@ -21,31 +22,47 @@ public class ExpenseController {
     }
 
     @GetMapping
-    public List<Expense> getAllExpenses() {
-        return expenseService.getAllExpenses();
+    public List<Expense> getAllExpenses(@AuthenticationPrincipal com.cohabit.cohabit.entity.User actor) {
+        return actor.getHouseholdId() == null ? List.of() : expenseService.getExpensesByHousehold(actor.getHouseholdId());
     }
 
     @GetMapping("/household/{householdId}")
-    public List<Expense> getExpensesByHousehold(@PathVariable Long householdId) {
-        return expenseService.getExpensesByHousehold(householdId);
+    public ResponseEntity<?> getExpensesByHousehold(@PathVariable Long householdId,
+                                                    @AuthenticationPrincipal com.cohabit.cohabit.entity.User actor) {
+        if (!householdId.equals(actor.getHouseholdId()) && !"ADMIN".equals(actor.getRole())) {
+            return ResponseEntity.status(403).body(java.util.Map.of("error", "Access denied"));
+        }
+        return ResponseEntity.ok(expenseService.getExpensesByHousehold(householdId));
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Expense> getExpenseById(@PathVariable Long id) {
+    public ResponseEntity<?> getExpenseById(@PathVariable Long id,
+                                            @AuthenticationPrincipal com.cohabit.cohabit.entity.User actor) {
         return expenseService.getExpenseById(id)
+                .filter(expense -> expense.getHouseholdId().equals(actor.getHouseholdId()) || "ADMIN".equals(actor.getRole()))
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
 
     @PostMapping
-    public Expense createExpense(@Valid @RequestBody Expense expense) {
-        return expenseService.createExpense(expense);
+    public ResponseEntity<?> createExpense(@Valid @RequestBody Expense expense,
+                                           @AuthenticationPrincipal com.cohabit.cohabit.entity.User actor) {
+        try {
+            return ResponseEntity.ok(expenseService.createExpense(expense, actor.getId()));
+        } catch (SecurityException e) {
+            return ResponseEntity.status(403).body(java.util.Map.of("error", e.getMessage()));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(java.util.Map.of("error", e.getMessage()));
+        }
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<?> updateExpense(@PathVariable Long id, @Valid @RequestBody Expense expense) {
+    public ResponseEntity<?> updateExpense(@PathVariable Long id, @Valid @RequestBody Expense expense,
+                                          @AuthenticationPrincipal com.cohabit.cohabit.entity.User actor) {
         try {
-            return ResponseEntity.ok(expenseService.updateExpense(id, expense));
+            return ResponseEntity.ok(expenseService.updateExpense(id, expense, actor.getId()));
+        } catch (SecurityException e) {
+            return ResponseEntity.status(403).body(java.util.Map.of("error", e.getMessage()));
         } catch (RuntimeException e) {
             e.printStackTrace();
             return ResponseEntity.status(404).body(java.util.Map.of("error", e.getMessage()));
@@ -53,30 +70,36 @@ public class ExpenseController {
     }
 
     @PostMapping("/{id}/settle")
-    public ResponseEntity<?> settleExpense(@PathVariable Long id, @RequestBody java.util.Map<String, Object> payload) {
+    public ResponseEntity<?> settleExpense(@PathVariable Long id, @RequestBody java.util.Map<String, Object> payload,
+                                           @AuthenticationPrincipal com.cohabit.cohabit.entity.User actor) {
         try {
-            Long userId = null;
-            if (payload.get("userId") != null) {
-                userId = Long.valueOf(payload.get("userId").toString());
-            }
             java.math.BigDecimal amount = null;
             if (payload.get("amount") != null) {
                 amount = new java.math.BigDecimal(payload.get("amount").toString());
             }
-            if (userId == null || amount == null || amount.compareTo(java.math.BigDecimal.ZERO) <= 0) {
-                return ResponseEntity.badRequest().body(java.util.Map.of("error", "Valid userId and amount are required"));
+            if (amount == null || amount.compareTo(java.math.BigDecimal.ZERO) <= 0) {
+                return ResponseEntity.badRequest().body(java.util.Map.of("error", "A valid positive amount is required"));
             }
-            Expense updated = expenseService.settleExpenseShare(id, userId, amount);
+            Expense updated = expenseService.settleExpenseShare(id, actor.getId(), amount, actor.getId());
             return ResponseEntity.ok(updated);
+        } catch (SecurityException e) {
+            return ResponseEntity.status(403).body(java.util.Map.of("error", e.getMessage()));
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(java.util.Map.of("error", e.getMessage()));
         }
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteExpense(@PathVariable Long id) {
-        expenseService.deleteExpense(id);
-        return ResponseEntity.noContent().build();
+    public ResponseEntity<?> deleteExpense(@PathVariable Long id,
+                                           @AuthenticationPrincipal com.cohabit.cohabit.entity.User actor) {
+        try {
+            expenseService.deleteExpense(id, actor.getId());
+            return ResponseEntity.noContent().build();
+        } catch (SecurityException e) {
+            return ResponseEntity.status(403).body(java.util.Map.of("error", e.getMessage()));
+        } catch (RuntimeException e) {
+            return ResponseEntity.notFound().build();
+        }
     }
 }
 

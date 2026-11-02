@@ -3,6 +3,7 @@ package com.cohabit.cohabit.entity;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
+import java.math.BigDecimal;
 
 @Entity
 @Table(name = "shopping_items")
@@ -25,6 +26,19 @@ public class ShoppingItem {
     @JoinColumn(name = "added_by")
     @JsonIgnore
     private User addedBy;
+
+    @Column(name = "purchased_price")
+    private BigDecimal purchasedPrice;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "purchased_by")
+    @JsonIgnore
+    private User purchasedBy;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "expense_id")
+    @JsonIgnore
+    private Expense expense;
 
     @Column(name = "created_at", insertable = false, updatable = false)
     private LocalDateTime createdAt;
@@ -71,6 +85,15 @@ public class ShoppingItem {
             this.addedBy = null;
         }
     }
+
+    public BigDecimal getPurchasedPrice() { return purchasedPrice; }
+    public void setPurchasedPrice(BigDecimal purchasedPrice) { this.purchasedPrice = purchasedPrice; }
+    public User getPurchasedBy() { return purchasedBy; }
+    public void setPurchasedBy(User purchasedBy) { this.purchasedBy = purchasedBy; }
+    public Long getPurchasedById() { return purchasedBy != null ? purchasedBy.getId() : null; }
+    public Expense getExpense() { return expense; }
+    public void setExpense(Expense expense) { this.expense = expense; }
+    public Long getExpenseId() { return expense != null ? expense.getId() : null; }
 
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }

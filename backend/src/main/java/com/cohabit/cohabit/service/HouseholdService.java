@@ -53,6 +53,9 @@ public class HouseholdService {
 
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
+        if (user.getHousehold() != null) {
+            throw new IllegalStateException("Leave the current household before creating another one");
+        }
 
         Household household = new Household();
         household.setName(name.trim());
@@ -61,27 +64,31 @@ public class HouseholdService {
 
         user.setHousehold(household);
         userRepository.save(user);
+        household.setAdministrator(user);
+        household = householdRepository.save(household);
 
         return household;
     }
 
     @Transactional
-    public Household updateHousehold(Long id, String name) {
+    public Household updateHousehold(Long id, String name, Long actorId) {
         if (name == null || name.trim().isEmpty()) {
             throw new IllegalArgumentException("Household name is required");
         }
 
         Household household = householdRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Household not found with id " + id));
+        requireAdministrator(household, actorId);
 
         household.setName(name.trim());
         return householdRepository.save(household);
     }
 
     @Transactional
-    public void deleteHousehold(Long id) {
+    public void deleteHousehold(Long id, Long actorId) {
         Household household = householdRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Household not found with id " + id));
+        requireAdministrator(household, actorId);
 
         // Detach all members before deleting
         List<User> members = userRepository.findByHouseholdId(id);
@@ -127,18 +134,60 @@ public class HouseholdService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
 
+        if (user.getHousehold() != null && userId.equals(user.getHousehold().getAdministratorId())) {
+            throw new IllegalStateException("Transfer household administration before leaving");
+        }
+
         user.setHousehold(null);
         userRepository.save(user);
     }
 
     @Transactional
-    public Household regenerateInviteCode(Long householdId) {
+    public Household regenerateInviteCode(Long householdId, Long actorId) {
         Household household = householdRepository.findById(householdId)
                 .orElseThrow(() -> new RuntimeException("Household not found with id " + householdId));
+        requireAdministrator(household, actorId);
 
         String newCode = generateUniqueInviteCode();
         household.setInviteCode(newCode);
         return householdRepository.save(household);
+    }
+
+    @Transactional
+    public void removeMember(Long householdId, Long memberId, Long actorId) {
+        Household household = householdRepository.findById(householdId)
+                .orElseThrow(() -> new RuntimeException("Household not found with id " + householdId));
+        requireAdministrator(household, actorId);
+        if (memberId.equals(household.getAdministratorId())) {
+            throw new IllegalStateException("Transfer household administration before removing the administrator");
+        }
+        User member = userRepository.findById(memberId)
+                .orElseThrow(() -> new RuntimeException("Member not found"));
+        if (!householdId.equals(member.getHouseholdId())) {
+            throw new IllegalArgumentException("User is not a member of this household");
+        }
+        member.setHousehold(null);
+        userRepository.save(member);
+    }
+
+    @Transactional
+    public Household appointAdministrator(Long householdId, Long memberId, Long actorId) {
+        Household household = householdRepository.findById(householdId)
+                .orElseThrow(() -> new RuntimeException("Household not found with id " + householdId));
+        requireAdministrator(household, actorId);
+        User member = userRepository.findById(memberId)
+                .orElseThrow(() -> new RuntimeException("Member not found"));
+        if (!householdId.equals(member.getHouseholdId())) {
+            throw new IllegalArgumentException("The new administrator must belong to this household");
+        }
+        household.setAdministrator(member);
+        return householdRepository.save(household);
+    }
+
+    private void requireAdministrator(Household household, Long actorId) {
+        if (actorId == null || !actorId.equals(household.getAdministratorId())) {
+            throw new SecurityException("Only the household administrator can perform this action");
+        }
     }
 
     private String generateUniqueInviteCode() {

@@ -8,6 +8,7 @@ import com.cohabit.cohabit.repository.HouseholdRepository;
 import com.cohabit.cohabit.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
@@ -20,6 +21,7 @@ import java.util.Set;
 
 @RestController
 @RequestMapping("/api/admin")
+@PreAuthorize("hasRole('ADMIN')")
 public class AdminController {
 
     private final UserRepository userRepository;
@@ -209,6 +211,8 @@ public class AdminController {
         response.put("userId", complaint.getUserId());
         response.put("userName", complaint.getUser().getName());
         response.put("userEmail", complaint.getUser().getEmail());
+        response.put("reportedUserId", complaint.getReportedUserId());
+        response.put("reportedUserName", complaint.getReportedUser() == null ? null : complaint.getReportedUser().getName());
         response.put("category", complaint.getCategory());
         response.put("subject", complaint.getSubject());
         response.put("description", complaint.getDescription());
