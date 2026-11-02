@@ -57,6 +57,12 @@ public class NotificationService {
 
     @Transactional
     public Notification createNotification(Long userId, Long householdId, String title, String message, String type, String link) {
+        return createNotification(userId, householdId, title, message, type, link, new MailDetails(List.of()));
+    }
+
+    @Transactional
+    public Notification createNotification(Long userId, Long householdId, String title, String message,
+                                           String type, String link, MailDetails mailDetails) {
         Notification notif = new Notification();
         notif.setUserId(userId);
         notif.setHouseholdId(householdId);
@@ -67,17 +73,23 @@ public class NotificationService {
         notif.setIsRead(false);
         Notification saved = notificationRepository.save(notif);
         userRepository.findById(userId).ifPresent(user ->
-            mailNotificationService.ifAvailable(mail -> mail.sendNotification(user, title, message)));
+            mailNotificationService.ifAvailable(mail -> mail.sendNotification(user, title, message, link, mailDetails)));
         return saved;
     }
 
     @Transactional
     public void notifyHouseholdMembers(Long householdId, Long excludeUserId, String title, String message, String type, String link) {
+        notifyHouseholdMembers(householdId, excludeUserId, title, message, type, link, new MailDetails(List.of()));
+    }
+
+    @Transactional
+    public void notifyHouseholdMembers(Long householdId, Long excludeUserId, String title, String message,
+                                       String type, String link, MailDetails mailDetails) {
         if (householdId == null) return;
         List<User> members = userRepository.findByHouseholdId(householdId);
         for (User member : members) {
             if (excludeUserId == null || !member.getId().equals(excludeUserId)) {
-                createNotification(member.getId(), householdId, title, message, type, link);
+                createNotification(member.getId(), householdId, title, message, type, link, mailDetails);
             }
         }
     }

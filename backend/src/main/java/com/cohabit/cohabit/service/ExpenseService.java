@@ -7,7 +7,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
+import java.time.format.DateTimeFormatter;
+import java.util.Locale;
 
 @Service
 public class ExpenseService {
@@ -69,17 +74,58 @@ public class ExpenseService {
                         .orElse("Un colocataire");
             }
             String msg = payerName + " a ajouté la dépense '" + saved.getLabel() + "' (" + saved.getAmount() + " MAD)";
+            List<MailDetails.Row> mailRows = new ArrayList<>();
+            mailRows.add(new MailDetails.Row("Dépense", value(saved.getEmoji(), "💸") + " " + value(saved.getLabel(), "Dépense")));
+            mailRows.add(new MailDetails.Row("Date de la dépense", saved.getExpenseDate() == null
+                    ? "Non renseignée" : saved.getExpenseDate().format(DateTimeFormatter.ofPattern("d MMMM yyyy", Locale.FRENCH))));
+            mailRows.add(new MailDetails.Row("Montant total", money(saved.getAmount()) + " MAD"));
+            mailRows.add(new MailDetails.Row("Payée par", payerName));
+            mailRows.add(new MailDetails.Row("Ajoutée par", creator.getName()));
+
+            List<com.cohabit.cohabit.entity.ExpenseShare> shares = saved.getShares() == null ? List.of() : saved.getShares();
+            Map<Long, String> memberNames = new HashMap<>();
+            for (com.cohabit.cohabit.entity.ExpenseShare share : shares) {
+                if (share.getUserId() != null) {
+                    memberNames.put(share.getUserId(), userRepository.findById(share.getUserId())
+                            .map(com.cohabit.cohabit.entity.User::getName).orElse("Colocataire"));
+                }
+            }
+            for (com.cohabit.cohabit.entity.ExpenseShare share : shares) {
+                String memberName = memberNames.getOrDefault(share.getUserId(), "Colocataire");
+                java.math.BigDecimal shareAmount = share.getShareAmount() == null ? java.math.BigDecimal.ZERO : share.getShareAmount();
+                java.math.BigDecimal paidAmount = share.getPaidAmount() == null ? java.math.BigDecimal.ZERO : share.getPaidAmount();
+                boolean isPayer = share.getUserId() != null && share.getUserId().equals(saved.getPayerId());
+                java.math.BigDecimal remaining = isPayer ? java.math.BigDecimal.ZERO : shareAmount.subtract(paidAmount).max(java.math.BigDecimal.ZERO);
+                String status = remaining.signum() == 0 ? "Réglé" : paidAmount.signum() > 0
+                        ? "Reste " + money(remaining) + " MAD (" + money(paidAmount) + " MAD réglés)"
+                        : "À régler : " + money(remaining) + " MAD";
+                mailRows.add(new MailDetails.Row("Part — " + memberName,
+                        money(shareAmount) + " MAD · " + status));
+            }
+            if (saved.getAttachmentUrl() != null && !saved.getAttachmentUrl().isBlank()) {
+                String filename = saved.getAttachmentUrl().substring(saved.getAttachmentUrl().lastIndexOf('/') + 1);
+                mailRows.add(new MailDetails.Row("Justificatif", "Pièce jointe : " + filename + " (disponible dans la plateforme)"));
+            }
             notificationService.notifyHouseholdMembers(
                     saved.getHouseholdId(),
                     null,
                     "Nouvelle dépense",
                     msg,
                     "EXPENSE",
-                    "/expenses/" + saved.getId()
+                    "/expenses/" + saved.getId(),
+                    new MailDetails(mailRows)
             );
         }
 
         return saved;
+    }
+
+    private String money(java.math.BigDecimal amount) {
+        return (amount == null ? java.math.BigDecimal.ZERO : amount).setScale(2, java.math.RoundingMode.HALF_UP).toPlainString();
+    }
+
+    private String value(String candidate, String fallback) {
+        return candidate == null || candidate.isBlank() ? fallback : candidate;
     }
 
     @Transactional

@@ -7,7 +7,10 @@ import com.cohabit.cohabit.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 
 @Service
@@ -34,8 +37,8 @@ public class TaskService {
     }
 
     public Task createTask(Task task, Long actorId) {
-        requireMember(task.getHouseholdId(), actorId);
-        if (task.getAssignedUserId() != null) requireMember(task.getHouseholdId(), task.getAssignedUserId());
+        User creator = requireMember(task.getHouseholdId(), actorId);
+        User assignee = task.getAssignedUserId() == null ? null : requireMember(task.getHouseholdId(), task.getAssignedUserId());
         task.setStatus("PENDING");
         Task saved = taskRepository.save(task);
 
@@ -48,7 +51,8 @@ public class TaskService {
                         "Nouvelle tâche",
                         msg,
                         "TASK",
-                        "/tasks"
+                        "/tasks",
+                        taskMailDetails(saved, creator, assignee)
                 );
             }
         } catch (Exception e) {
@@ -60,22 +64,35 @@ public class TaskService {
 
     public Task updateTask(Long id, Task taskDetails, Long actorId) {
         return taskRepository.findById(id).map(task -> {
-            requireMember(task.getHouseholdId(), actorId);
+            User assigner = requireMember(task.getHouseholdId(), actorId);
+            Long previousAssigneeId = task.getAssignedUserId();
             if (taskDetails.getStatus() != null && !task.getStatus().equalsIgnoreCase(taskDetails.getStatus())) {
                 throw new SecurityException("Task status can only be changed by its assigned member");
             }
             if (!task.getHouseholdId().equals(taskDetails.getHouseholdId())) {
                 throw new IllegalArgumentException("A task cannot be moved to another household");
             }
-            if (taskDetails.getAssignedUserId() != null) {
-                requireMember(task.getHouseholdId(), taskDetails.getAssignedUserId());
-            }
+            User newAssignee = taskDetails.getAssignedUserId() == null
+                    ? null : requireMember(task.getHouseholdId(), taskDetails.getAssignedUserId());
             task.setName(taskDetails.getName());
             task.setFrequencyDays(taskDetails.getFrequencyDays());
             task.setDueDate(taskDetails.getDueDate());
             task.setAssignedUserId(taskDetails.getAssignedUserId());
             task.setRotationIndex(taskDetails.getRotationIndex());
-            return taskRepository.save(task);
+            Task saved = taskRepository.save(task);
+            Long newAssigneeId = saved.getAssignedUserId();
+            if (newAssigneeId != null && !newAssigneeId.equals(previousAssigneeId)) {
+                notificationService.createNotification(
+                        newAssigneeId,
+                        saved.getHouseholdId(),
+                        "Tâche assignée",
+                        "La tâche '" + saved.getName() + "' vous a été assignée.",
+                        "TASK",
+                        "/tasks",
+                        taskMailDetails(saved, assigner, newAssignee)
+                );
+            }
+            return saved;
         }).orElseThrow(() -> new RuntimeException("Task not found with id " + id));
     }
 
@@ -108,5 +125,21 @@ public class TaskService {
             throw new SecurityException("User does not belong to this household");
         }
         return user;
+    }
+
+    private MailDetails taskMailDetails(Task task, User assigner, User assignee) {
+        String dueDate = task.getDueDate() == null ? "Non définie"
+                : task.getDueDate().format(DateTimeFormatter.ofPattern("EEEE d MMMM yyyy", Locale.FRENCH));
+        String frequency = task.getFrequencyDays() == null ? "Ponctuelle"
+                : task.getFrequencyDays() == 1 ? "Tous les jours"
+                : "Tous les " + task.getFrequencyDays() + " jours";
+        return new MailDetails(List.of(
+                new MailDetails.Row("Tâche", task.getName()),
+                new MailDetails.Row("Assignée à", assignee == null ? "Personne" : assignee.getName()),
+                new MailDetails.Row("Assignée par", assigner == null ? "Un colocataire" : assigner.getName()),
+                new MailDetails.Row("Échéance", dueDate),
+                new MailDetails.Row("Récurrence", frequency),
+                new MailDetails.Row("Statut", task.getStatus() == null ? "En attente" : task.getStatus())
+        ));
     }
 }
