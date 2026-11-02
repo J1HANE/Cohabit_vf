@@ -10,6 +10,7 @@ import {
   SummaryCard,
 } from '../../components/shared/SharedComponents';
 import './Expenses.css';
+import { apiFetch } from '../../services/api';
 
 const FILTERS = ['All', 'Mine', 'This month', 'Last month'];
 
@@ -27,7 +28,7 @@ export default function Expenses() {
       ? `http://localhost:8081/api/expenses/household/${householdId}`
       : 'http://localhost:8081/api/expenses';
 
-    fetch(url)
+    apiFetch(url)
       .then(async (res) => {
         const data = await res.json();
         if (!res.ok || !Array.isArray(data)) {

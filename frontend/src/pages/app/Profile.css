@@ -47,6 +47,108 @@
   margin-bottom: 1.25rem;
 }
 
+.support-intro,
+.support-empty {
+  margin: -0.5rem 0 1.25rem;
+  color: rgba(255, 255, 255, 0.48);
+  font-size: 0.85rem;
+  line-height: 1.5;
+}
+
+.support-message {
+  margin-bottom: 1rem;
+  padding: 0.75rem 0.9rem;
+  border: 1px solid rgba(168, 213, 196, 0.2);
+  border-radius: 10px;
+  font-size: 0.84rem;
+}
+
+.support-message.is-success {
+  background: rgba(168, 213, 196, 0.08);
+  color: #a8d5c4;
+}
+
+.support-message.is-error {
+  background: rgba(255, 107, 107, 0.08);
+  border-color: rgba(255, 107, 107, 0.2);
+  color: #ff9a9a;
+}
+
+.support-character-count {
+  align-self: flex-end;
+  color: rgba(255, 255, 255, 0.4);
+  font-size: 0.72rem;
+}
+
+.support-history {
+  display: grid;
+  gap: 0.75rem;
+  margin-top: 1.75rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.support-history .profile-section-title {
+  margin: 0;
+}
+
+.support-empty {
+  margin: 0;
+}
+
+.support-request {
+  padding: 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.support-request-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.support-request-heading strong,
+.support-request-heading span {
+  display: block;
+}
+
+.support-request-heading strong {
+  color: #fff;
+  font-size: 0.88rem;
+}
+
+.support-request-heading div > span {
+  margin-top: 0.3rem;
+  color: rgba(255, 255, 255, 0.42);
+  font-size: 0.72rem;
+}
+
+.support-status {
+  padding: 0.3rem 0.55rem;
+  border-radius: 100px;
+  font-size: 0.68rem;
+  white-space: nowrap;
+  text-transform: capitalize;
+}
+
+.status-open { background: rgba(242, 190, 108, 0.12); color: #f2be6c; }
+.status-in_review { background: rgba(110, 159, 212, 0.14); color: #8eb6e2; }
+.status-resolved { background: rgba(168, 213, 196, 0.12); color: #a8d5c4; }
+
+.support-admin-response {
+  margin-top: 0.8rem;
+  padding: 0.75rem;
+  border-left: 2px solid #a8d5c4;
+  background: rgba(168, 213, 196, 0.06);
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 0.82rem;
+  line-height: 1.5;
+  white-space: pre-wrap;
+}
+
 /* Color picker */
 .color-picker {
   display: flex;

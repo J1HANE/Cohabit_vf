@@ -1,10 +1,11 @@
 package com.cohabit.cohabit.controller;
 
 import com.cohabit.cohabit.entity.Task;
+import com.cohabit.cohabit.entity.User;
 import com.cohabit.cohabit.service.TaskService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.http.HttpStatus;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import jakarta.validation.Valid;
 
@@ -22,38 +23,64 @@ public class TaskController {
     }
 
     @GetMapping
-    public List<Task> getAllTasks() {
-        return taskService.getAllTasks();
+    public List<Task> getAllTasks(@AuthenticationPrincipal User actor) {
+        return actor.getHouseholdId() == null ? List.of()
+                : taskService.getAllTasks().stream()
+                .filter(task -> actor.getHouseholdId().equals(task.getHouseholdId())).toList();
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Task> getTaskById(@PathVariable Long id) {
+    public ResponseEntity<?> getTaskById(@PathVariable Long id, @AuthenticationPrincipal User actor) {
         return taskService.getTaskById(id)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+                .filter(task -> actor.getHouseholdId() != null && actor.getHouseholdId().equals(task.getHouseholdId()))
+                .map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
     }
 
     @PostMapping
-    public Task createTask(@Valid @RequestBody Task task) {
-        return taskService.createTask(task);
+    public ResponseEntity<?> createTask(@Valid @RequestBody Task task, @AuthenticationPrincipal User actor) {
+        try {
+            return ResponseEntity.ok(taskService.createTask(task, actor.getId()));
+        } catch (SecurityException e) {
+            return ResponseEntity.status(403).body(java.util.Map.of("error", e.getMessage()));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(java.util.Map.of("error", e.getMessage()));
+        }
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<?> updateTask(@PathVariable Long id, @Valid @RequestBody Task task,
-                                        @RequestHeader(value = "X-User-Id", required = false) Long userId) {
+                                        @AuthenticationPrincipal User actor) {
         try {
-            return ResponseEntity.ok(taskService.updateTask(id, task, userId));
-        } catch (org.springframework.security.access.AccessDeniedException e) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(java.util.Map.of("error", e.getMessage()));
+            return ResponseEntity.ok(taskService.updateTask(id, task, actor.getId()));
+        } catch (SecurityException e) {
+            return ResponseEntity.status(403).body(java.util.Map.of("error", e.getMessage()));
+        } catch (RuntimeException e) {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
+    @PostMapping("/{id}/complete")
+    public ResponseEntity<?> completeTask(@PathVariable Long id, @AuthenticationPrincipal User actor) {
+        try {
+            return ResponseEntity.ok(taskService.completeTask(id, actor.getId()));
+        } catch (SecurityException e) {
+            return ResponseEntity.status(403).body(java.util.Map.of("error", e.getMessage()));
+        } catch (IllegalStateException e) {
+            return ResponseEntity.badRequest().body(java.util.Map.of("error", e.getMessage()));
         } catch (RuntimeException e) {
             return ResponseEntity.notFound().build();
         }
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteTask(@PathVariable Long id) {
-        taskService.deleteTask(id);
-        return ResponseEntity.noContent().build();
+    public ResponseEntity<?> deleteTask(@PathVariable Long id, @AuthenticationPrincipal User actor) {
+        try {
+            taskService.deleteTask(id, actor.getId());
+            return ResponseEntity.noContent().build();
+        } catch (SecurityException e) {
+            return ResponseEntity.status(403).body(java.util.Map.of("error", e.getMessage()));
+        } catch (RuntimeException e) {
+            return ResponseEntity.notFound().build();
+        }
     }
 }

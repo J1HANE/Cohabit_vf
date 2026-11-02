@@ -8,6 +8,7 @@ import {
 } from '../../components/shared/SharedComponents';
 import { useHousehold } from '../../context/HouseholdContext';
 import { useAuth } from '../../context/AuthContext';
+import { apiFetch } from '../../services/api';
 import './ExpenseDetail.css';
 
 export default function ExpenseDetail() {
@@ -26,9 +27,10 @@ export default function ExpenseDetail() {
   const [settling, setSettling] = useState(false);
   const [settleError, setSettleError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
+  const [attachmentHref, setAttachmentHref] = useState('');
 
   const fetchExpense = () => {
-    return fetch(`http://localhost:8081/api/expenses/${id}`)
+    return apiFetch(`http://localhost:8081/api/expenses/${id}`)
       .then(async (res) => {
         if (!res.ok) throw new Error('Expense not found');
         const data = await res.json();
@@ -56,11 +58,30 @@ export default function ExpenseDetail() {
     fetchExpense().finally(() => setLoading(false));
   }, [id]);
 
+  useEffect(() => {
+    if (!expense?.attachment_url) return undefined;
+    let objectUrl;
+    apiFetch(`http://localhost:8081${expense.attachment_url}`)
+      .then((response) => {
+        if (!response.ok) throw new Error('Unable to load attachment');
+        return response.blob();
+      })
+      .then((blob) => {
+        objectUrl = URL.createObjectURL(blob);
+        setAttachmentHref(objectUrl);
+      })
+      .catch(() => setAttachmentHref(''));
+    return () => {
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
+      setAttachmentHref('');
+    };
+  }, [expense?.attachment_url]);
+
   const handleDelete = async () => {
     if (!window.confirm('Are you sure you want to delete this expense?')) return;
     setDeleting(true);
     try {
-      const res = await fetch(`http://localhost:8081/api/expenses/${id}`, {
+      const res = await apiFetch(`http://localhost:8081/api/expenses/${id}`, {
         method: 'DELETE',
       });
       if (res.ok) {
@@ -88,7 +109,8 @@ export default function ExpenseDetail() {
   const myUnpaidShare = unpaidShares.find((s) => Number(s.user_id) === Number(user?.id));
 
   const openSettleModal = () => {
-    const defaultUserId = myUnpaidShare ? user?.id : unpaidShares[0]?.user_id;
+    if (!myUnpaidShare) return;
+    const defaultUserId = user?.id;
     const targetShare = (expense?.shares || []).find(
       (s) => Number(s.user_id) === Number(defaultUserId)
     );
@@ -100,18 +122,6 @@ export default function ExpenseDetail() {
     setSettleAmount(remaining > 0 ? remaining.toFixed(2) : '');
     setSettleError('');
     setIsSettleModalOpen(true);
-  };
-
-  const handleUserSelectChange = (newUserId) => {
-    setSettleUserId(newUserId);
-    const targetShare = (expense?.shares || []).find(
-      (s) => Number(s.user_id) === Number(newUserId)
-    );
-    const remaining = targetShare
-      ? Math.max(0, Number(targetShare.share_amount || 0) - Number(targetShare.paid_amount || 0))
-      : 0;
-    setSettleAmount(remaining > 0 ? remaining.toFixed(2) : '');
-    setSettleError('');
   };
 
   const selectedTargetShare = (expense?.shares || []).find(
@@ -144,7 +154,7 @@ export default function ExpenseDetail() {
     setSettleError('');
 
     try {
-      const res = await fetch(`http://localhost:8081/api/expenses/${id}/settle`, {
+      const res = await apiFetch(`http://localhost:8081/api/expenses/${id}/settle`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -193,6 +203,7 @@ export default function ExpenseDetail() {
   }
 
   const allDebtsSettled = unpaidShares.length === 0;
+  const isCreator = Number(expense.createdById) === Number(user?.id);
 
   return (
     <div className="expense-detail-page page-fade">
@@ -203,14 +214,14 @@ export default function ExpenseDetail() {
             <AppButton variant="ghost" size="md" onClick={() => navigate('/expenses')}>
               Back
             </AppButton>
-            <AppButton
-              variant="danger"
-              size="md"
-              onClick={handleDelete}
-              disabled={deleting}
-            >
-              {deleting ? 'Deleting...' : 'Delete'}
-            </AppButton>
+            {isCreator && <>
+              <AppButton variant="ghost" size="md" onClick={() => navigate(`/expenses/${id}/edit`)}>
+                Modifier
+              </AppButton>
+              <AppButton variant="danger" size="md" onClick={handleDelete} disabled={deleting}>
+                {deleting ? 'Deleting...' : 'Delete'}
+              </AppButton>
+            </>}
           </div>
         }
       />
@@ -297,14 +308,14 @@ export default function ExpenseDetail() {
               {expense.attachment_url.match(/\.(jpg|jpeg|png|webp)($|\?)/i) ? (
                 <div className="attachment-image-preview">
                   <a
-                    href={`http://localhost:8081${expense.attachment_url}`}
+                    href={attachmentHref || undefined}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="attachment-image-link"
                     title="Cliquer pour ouvrir en grand"
                   >
                     <img
-                      src={`http://localhost:8081${expense.attachment_url}`}
+                      src={attachmentHref || undefined}
                       alt="Justificatif de dépense"
                       className="attachment-img"
                     />
@@ -315,7 +326,7 @@ export default function ExpenseDetail() {
                 </div>
               ) : (
                 <a
-                  href={`http://localhost:8081${expense.attachment_url}`}
+                  href={attachmentHref || undefined}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="attachment-doc-card"
@@ -339,9 +350,9 @@ export default function ExpenseDetail() {
             variant={allDebtsSettled ? 'ghost' : 'primary'}
             size="md"
             onClick={openSettleModal}
-            disabled={allDebtsSettled}
+            disabled={!myUnpaidShare}
           >
-            {allDebtsSettled ? '✓ All debts settled' : 'Settle debt'}
+            {allDebtsSettled ? '✓ All debts settled' : myUnpaidShare ? 'Settle my share' : 'No personal debt to settle'}
           </AppButton>
         </div>
       </div>
@@ -381,27 +392,6 @@ export default function ExpenseDetail() {
               </span>
             </div>
           </div>
-
-          {unpaidShares.length > 1 && (
-            <div className="app-form-group">
-              <label className="app-form-label">Member Settling</label>
-              <select
-                className="app-form-select"
-                value={settleUserId}
-                onChange={(e) => handleUserSelectChange(e.target.value)}
-              >
-                {unpaidShares.map((s) => {
-                  const m = getMemberById(s.user_id);
-                  const rem = Math.max(0, Number(s.share_amount) - Number(s.paid_amount));
-                  return (
-                    <option key={s.user_id} value={s.user_id}>
-                      {m?.name || 'User'} (owes {rem.toFixed(2)} MAD)
-                    </option>
-                  );
-                })}
-              </select>
-            </div>
-          )}
 
           <div className="app-form-group">
             <label className="app-form-label">Amount to Pay (MAD)</label>

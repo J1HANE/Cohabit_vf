@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { PageHeader, AppButton } from '../../components/shared/SharedComponents';
 import { useHousehold } from '../../context/HouseholdContext';
 import { useAuth } from '../../context/AuthContext';
+import { apiFetch } from '../../services/api';
 import './Settlements.css';
 
 export default function Settlements() {
@@ -14,7 +15,7 @@ export default function Settlements() {
   useEffect(() => {
     const householdId = user?.householdId || user?.household_id;
     if (householdId) {
-      fetch(`http://localhost:8081/api/settlements/household/${householdId}`)
+      apiFetch(`http://localhost:8081/api/settlements/household/${householdId}`)
         .then(async (res) => {
           const data = await res.json();
           if (!res.ok || !Array.isArray(data)) {

@@ -9,6 +9,7 @@ import {
   HouseholdMemberAvatar,
 } from '../../components/shared/SharedComponents';
 import { calculateBalances } from '../../data/mockData';
+import { apiFetch } from '../../services/api';
 import './Balances.css';
 
 export default function Balances() {
@@ -25,7 +26,7 @@ export default function Balances() {
       ? `http://localhost:8081/api/expenses/household/${householdId}`
       : 'http://localhost:8081/api/expenses';
 
-    fetch(url)
+    apiFetch(url)
       .then(async (res) => {
         const data = await res.json();
         if (!res.ok || !Array.isArray(data)) {
@@ -50,7 +51,7 @@ export default function Balances() {
   useEffect(() => {
     const householdId = household?.id || user?.householdId || user?.household_id;
     if (householdId) {
-      fetch(`http://localhost:8081/api/settlements/household/${householdId}`)
+      apiFetch(`http://localhost:8081/api/settlements/household/${householdId}`)
         .then(async (res) => {
           const data = await res.json();
           if (!res.ok || !Array.isArray(data)) {

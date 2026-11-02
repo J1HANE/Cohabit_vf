@@ -26,6 +26,11 @@ public class Expense {
     @JsonIgnore
     private User payer;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "created_by", nullable = false)
+    @JsonIgnore
+    private User createdBy;
+
     @NotBlank(message = "Label is mandatory")
     private String label;
 
@@ -81,6 +86,10 @@ public class Expense {
             this.payer = null;
         }
     }
+
+    public User getCreatedBy() { return createdBy; }
+    public void setCreatedBy(User createdBy) { this.createdBy = createdBy; }
+    public Long getCreatedById() { return createdBy != null ? createdBy.getId() : null; }
 
     public String getLabel() { return label; }
     public void setLabel(String label) { this.label = label; }

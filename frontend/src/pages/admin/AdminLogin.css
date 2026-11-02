@@ -3,17 +3,19 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: radial-gradient(ellipse at 15% 10%, rgba(168, 213, 196, 0.12), transparent 38%), #060a0f;
   padding: 1rem;
 }
 
 .admin-login-card {
-  background: white;
-  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.035);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 20px;
   padding: 2.5rem;
   width: 100%;
   max-width: 400px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(18px);
 }
 
 .admin-login-header {
@@ -24,12 +26,12 @@
 .admin-login-header h1 {
   font-size: 2rem;
   font-weight: 700;
-  color: #1a1a2e;
+  color: #fff;
   margin: 0 0 0.5rem 0;
 }
 
 .admin-login-header p {
-  color: #6b7280;
+  color: rgba(255, 255, 255, 0.5);
   font-size: 0.875rem;
   margin: 0;
 }
@@ -49,25 +51,27 @@
 .admin-form-label {
   font-size: 0.875rem;
   font-weight: 600;
-  color: #374151;
+  color: rgba(255, 255, 255, 0.68);
 }
 
 .admin-form-input {
   padding: 0.75rem 1rem;
-  border: 2px solid #e5e7eb;
-  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
   font-size: 1rem;
+  background: rgba(0, 0, 0, 0.25);
+  color: #fff;
   transition: border-color 0.2s;
 }
 
 .admin-form-input:focus {
   outline: none;
-  border-color: #667eea;
+  border-color: rgba(168, 213, 196, 0.55);
 }
 
 .admin-login-error {
-  background: #fee2e2;
-  color: #dc2626;
+  background: rgba(255, 107, 107, 0.09);
+  color: #ff9a9a;
   padding: 0.75rem;
   border-radius: 8px;
   font-size: 0.875rem;
@@ -75,11 +79,11 @@
 }
 
 .admin-login-button {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
+  background: #a8d5c4;
+  color: #0a1118;
   border: none;
   padding: 0.875rem;
-  border-radius: 8px;
+  border-radius: 12px;
   font-size: 1rem;
   font-weight: 600;
   cursor: pointer;
@@ -88,7 +92,7 @@
 
 .admin-login-button:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+  box-shadow: 0 4px 16px rgba(168, 213, 196, 0.18);
 }
 
 .admin-login-footer {
@@ -99,12 +103,12 @@
 .admin-back-link {
   background: none;
   border: none;
-  color: #6b7280;
+  color: rgba(255, 255, 255, 0.52);
   font-size: 0.875rem;
   cursor: pointer;
   transition: color 0.2s;
 }
 
 .admin-back-link:hover {
-  color: #667eea;
+  color: #a8d5c4;
 }

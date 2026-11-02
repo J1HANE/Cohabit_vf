@@ -4,6 +4,7 @@ import { PageHeader, AppButton } from '../../components/shared/SharedComponents'
 import { useAuth } from '../../context/AuthContext';
 import { useHousehold } from '../../context/HouseholdContext';
 import SpinWheel from '../../components/SpinWheel/SpinWheel';
+import { apiFetch } from '../../services/api';
 
 const FREQUENCIES = [
   { label: 'Every day', value: 1 },
@@ -53,7 +54,7 @@ export default function TaskNew() {
       rotationIndex: 0
     };
 
-    fetch('http://localhost:8081/api/tasks', {
+    apiFetch('http://localhost:8081/api/tasks', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'

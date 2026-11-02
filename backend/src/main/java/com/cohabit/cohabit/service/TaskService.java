@@ -1,10 +1,11 @@
 package com.cohabit.cohabit.service;
 
 import com.cohabit.cohabit.entity.Task;
+import com.cohabit.cohabit.entity.User;
 import com.cohabit.cohabit.repository.TaskRepository;
+import com.cohabit.cohabit.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.security.access.AccessDeniedException;
 
 import java.util.List;
 import java.util.Optional;
@@ -14,11 +15,14 @@ public class TaskService {
 
     private final TaskRepository taskRepository;
     private final NotificationService notificationService;
+    private final UserRepository userRepository;
 
     @Autowired
-    public TaskService(TaskRepository taskRepository, NotificationService notificationService) {
+    public TaskService(TaskRepository taskRepository, NotificationService notificationService,
+                       UserRepository userRepository) {
         this.taskRepository = taskRepository;
         this.notificationService = notificationService;
+        this.userRepository = userRepository;
     }
 
     public List<Task> getAllTasks() {
@@ -29,7 +33,10 @@ public class TaskService {
         return taskRepository.findById(id);
     }
 
-    public Task createTask(Task task) {
+    public Task createTask(Task task, Long actorId) {
+        requireMember(task.getHouseholdId(), actorId);
+        if (task.getAssignedUserId() != null) requireMember(task.getHouseholdId(), task.getAssignedUserId());
+        task.setStatus("PENDING");
         Task saved = taskRepository.save(task);
 
         try {
@@ -51,29 +58,55 @@ public class TaskService {
         return saved;
     }
 
-    public Task updateTask(Long id, Task taskDetails, Long requestingUserId) {
+    public Task updateTask(Long id, Task taskDetails, Long actorId) {
         return taskRepository.findById(id).map(task -> {
-            boolean markingCompleted = "completed".equalsIgnoreCase(taskDetails.getStatus())
-                    && !"completed".equalsIgnoreCase(task.getStatus());
-            if (markingCompleted && (requestingUserId == null
-                    || task.getAssignedUserId() == null
-                    || !task.getAssignedUserId().equals(requestingUserId))) {
-                throw new AccessDeniedException("Only the assigned user can complete this task");
+            requireMember(task.getHouseholdId(), actorId);
+            if (taskDetails.getStatus() != null && !task.getStatus().equalsIgnoreCase(taskDetails.getStatus())) {
+                throw new SecurityException("Task status can only be changed by its assigned member");
             }
-
-            task.setHouseholdId(taskDetails.getHouseholdId());
+            if (!task.getHouseholdId().equals(taskDetails.getHouseholdId())) {
+                throw new IllegalArgumentException("A task cannot be moved to another household");
+            }
+            if (taskDetails.getAssignedUserId() != null) {
+                requireMember(task.getHouseholdId(), taskDetails.getAssignedUserId());
+            }
             task.setName(taskDetails.getName());
             task.setFrequencyDays(taskDetails.getFrequencyDays());
             task.setDueDate(taskDetails.getDueDate());
-            task.setStatus(taskDetails.getStatus());
             task.setAssignedUserId(taskDetails.getAssignedUserId());
             task.setRotationIndex(taskDetails.getRotationIndex());
-            task.setLastCompletedAt(taskDetails.getLastCompletedAt());
             return taskRepository.save(task);
         }).orElseThrow(() -> new RuntimeException("Task not found with id " + id));
     }
 
-    public void deleteTask(Long id) {
-        taskRepository.deleteById(id);
+    public Task completeTask(Long id, Long actorId) {
+        Task task = taskRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Task not found with id " + id));
+        requireMember(task.getHouseholdId(), actorId);
+        if (task.getAssignedUserId() == null || !actorId.equals(task.getAssignedUserId())) {
+            throw new SecurityException("Only the assigned member can complete this task");
+        }
+        if ("COMPLETED".equalsIgnoreCase(task.getStatus())) {
+            throw new IllegalStateException("Task is already completed");
+        }
+        task.setStatus("COMPLETED");
+        task.setLastCompletedAt(java.time.LocalDateTime.now());
+        return taskRepository.save(task);
+    }
+
+    public void deleteTask(Long id, Long actorId) {
+        Task task = taskRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Task not found with id " + id));
+        requireMember(task.getHouseholdId(), actorId);
+        taskRepository.delete(task);
+    }
+
+    private User requireMember(Long householdId, Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+        if (householdId == null || !householdId.equals(user.getHouseholdId())) {
+            throw new SecurityException("User does not belong to this household");
+        }
+        return user;
     }
 }

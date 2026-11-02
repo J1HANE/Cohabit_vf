@@ -1,4 +1,18 @@
-# CoHabit - État du projet (Session du 18/10/2026)
+# CoHabit - Suivi du projet
+
+## Vérification fonctionnelle (02/11/2026)
+
+- Authentification Bearer stateless, expiration après sept jours et protection des API; rôles plateforme vérifiés côté serveur.
+- Dépenses: justificatifs image/PDF, édition et suppression par le créateur uniquement; répartition contrôlée côté serveur.
+- Tâches: seule la personne assignée peut les terminer.
+- Courses: la saisie du prix crée une dépense partagée atomiquement avec l’article acheté.
+- Foyer: un administrateur est désigné; lui seul peut modifier les informations, renouveler le code, retirer un membre ou transférer l’administration.
+- Réclamations et signalements d’utilisateurs, notifications internes et notifications e-mail configurables.
+- Tests unitaires ciblés: `AuthTokenServiceTest`, `TaskServiceTest`, `ExpenseServiceTest`.
+- Vérification complète du contexte Spring non disponible dans ce conteneur: MySQL n’est pas démarré sur `localhost:8889`. Le test historique `contextLoads` dépend de cette base.
+- La configuration SMTP est nécessaire pour envoyer de vrais e-mails; voir `API_ENDPOINTS.md`.
+
+## État historique (18/10/2026)
 
 ## ✅ Applications lancées
 

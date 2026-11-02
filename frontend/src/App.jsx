@@ -20,9 +20,16 @@ import Shopping from './pages/app/Shopping';
 import Profile from './pages/app/Profile';
 import HouseholdSettings from './pages/app/HouseholdSettings';
 import Notifications from './pages/app/Notifications';
+import Complaints from './pages/Complaints';
 import HouseholdCreate from './pages/household/HouseholdCreate';
 import HouseholdJoin from './pages/household/HouseholdJoin';
 import AdminLogin from './pages/admin/AdminLogin';
+import AdminLayout from './pages/admin/AdminLayout';
+import AdminDashboard from './pages/admin/AdminDashboard';
+import AdminUsers from './pages/admin/AdminUsers';
+import AdminHouseholds from './pages/admin/AdminHouseholds';
+import AdminStatistics from './pages/admin/AdminStatistics';
+import AdminComplaints from './pages/admin/AdminComplaints';
 import './App.css';
 
 function App() {
@@ -38,6 +45,16 @@ function App() {
             <Route path="/register" element={<Register />} />
             <Route path="/admin/login" element={<AdminLogin />} />
 
+            {/* Protected admin routes */}
+            <Route path="/admin" element={<AdminLayout />}>
+              <Route index element={<Navigate to="dashboard" replace />} />
+              <Route path="dashboard" element={<AdminDashboard />} />
+              <Route path="users" element={<AdminUsers />} />
+              <Route path="households" element={<AdminHouseholds />} />
+              <Route path="complaints" element={<AdminComplaints />} />
+              <Route path="statistics" element={<AdminStatistics />} />
+            </Route>
+
             {/* Household onboarding */}
             <Route path="/household/create" element={<HouseholdCreate />} />
             <Route path="/household/join" element={<HouseholdJoin />} />
@@ -47,6 +64,7 @@ function App() {
               <Route path="dashboard" element={<Dashboard />} />
               <Route path="expenses" element={<Expenses />} />
               <Route path="expenses/new" element={<ExpenseNew />} />
+              <Route path="expenses/:id/edit" element={<ExpenseNew />} />
               <Route path="expenses/:id" element={<ExpenseDetail />} />
               <Route path="tasks" element={<Tasks />} />
               <Route path="tasks/new" element={<TaskNew />} />
@@ -57,6 +75,7 @@ function App() {
               <Route path="profile" element={<Profile />} />
               <Route path="household/settings" element={<HouseholdSettings />} />
               <Route path="notifications" element={<Notifications />} />
+              <Route path="complaints" element={<Complaints />} />
             </Route>
 
             {/* Fallback */}

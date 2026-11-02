@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { useAuth } from './AuthContext';
+import { apiFetch } from '../services/api';
 
 const HouseholdContext = createContext(null);
 
@@ -29,8 +30,8 @@ export function HouseholdProvider({ children }) {
 
     try {
       const [householdRes, membersRes] = await Promise.all([
-        fetch(`http://localhost:8081/api/households/${householdId}`),
-        fetch(`http://localhost:8081/api/households/${householdId}/members`),
+        apiFetch(`http://localhost:8081/api/households/${householdId}`),
+        apiFetch(`http://localhost:8081/api/households/${householdId}/members`),
       ]);
 
       if (!householdRes.ok) {
