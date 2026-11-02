@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { PageHeader, AppButton } from '../../components/shared/SharedComponents';
 import { useHousehold } from '../../context/HouseholdContext';
 import { useAuth } from '../../context/AuthContext';
+import { apiFetch } from '../../services/api';
 import './Settlements.css';
 
 export default function SettlementNew() {
@@ -39,7 +40,7 @@ export default function SettlementNew() {
       amount: parseFloat(form.amount),
     };
 
-    fetch('http://localhost:8081/api/settlements', {
+    apiFetch('http://localhost:8081/api/settlements', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
@@ -81,15 +82,7 @@ export default function SettlementNew() {
           <form onSubmit={handleSubmit} className="app-form">
             <div className="app-form-group">
               <label className="app-form-label">From</label>
-              <select
-                className="app-form-select"
-                value={form.from_user_id}
-                onChange={(e) => setForm((f) => ({ ...f, from_user_id: parseInt(e.target.value) }))}
-              >
-                {members.map((m) => (
-                  <option key={m.id} value={m.id}>{m.name}</option>
-                ))}
-              </select>
+              <input className="app-form-input" value={user?.name || ''} readOnly />
             </div>
 
             <div className="settlement-arrow-label">→ pays</div>

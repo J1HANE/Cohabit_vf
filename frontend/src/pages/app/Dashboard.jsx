@@ -9,12 +9,14 @@ import {
   ShoppingItem,
   AppButton,
   EmptyState,
+  Modal,
 } from '../../components/shared/SharedComponents';
 import {
   calculateBalances,
   MOCK_SETTLEMENTS,
 } from '../../data/mockData';
 import './Dashboard.css';
+import { apiFetch } from '../../services/api';
 
 export default function Dashboard() {
   const { user } = useAuth();
@@ -24,9 +26,12 @@ export default function Dashboard() {
   const [shopping, setShopping] = useState([]);
   const [tasks, setTasks] = useState([]);
   const [expenses, setExpenses] = useState([]);
+  const [purchaseItem, setPurchaseItem] = useState(null);
+  const [purchasePrice, setPurchasePrice] = useState('');
+  const [purchaseError, setPurchaseError] = useState('');
 
   useEffect(() => {
-    fetch('http://localhost:8081/api/tasks')
+    apiFetch('http://localhost:8081/api/tasks')
       .then(async (res) => {
         const data = await res.json();
         if (!res.ok || !Array.isArray(data)) {
@@ -35,7 +40,7 @@ export default function Dashboard() {
         const mappedData = data.map((t) => ({
           ...t,
           due_date: t.dueDate || t.due_date,
-          status: t.status,
+          status: (t.status || 'pending').toLowerCase(),
           assigned_user_id: t.assignedUserId || t.assigned_user_id,
         }));
         setTasks(mappedData);
@@ -47,7 +52,7 @@ export default function Dashboard() {
       ? `http://localhost:8081/api/expenses/household/${householdId}`
       : 'http://localhost:8081/api/expenses';
 
-    fetch(expenseUrl)
+    apiFetch(expenseUrl)
       .then(async (res) => {
         const data = await res.json();
         if (!res.ok || !Array.isArray(data)) {
@@ -70,7 +75,7 @@ export default function Dashboard() {
       .catch((err) => console.error('Failed to fetch expenses in dashboard', err));
 
     if (householdId) {
-      fetch(`http://localhost:8081/api/shopping/household/${householdId}`)
+      apiFetch(`http://localhost:8081/api/shopping/household/${householdId}`)
         .then(async (res) => {
           const data = await res.json();
           if (!res.ok || !Array.isArray(data)) {
@@ -109,39 +114,48 @@ export default function Dashboard() {
   const shoppingPreview = shopping.slice(0, 4);
 
   const toggleTask = (id) => {
-    setTasks((prev) =>
-      prev.map((t) =>
-        t.id === id ? { ...t, status: t.status === 'completed' ? 'pending' : 'completed' } : t
-      )
-    );
+    const task = tasks.find((entry) => entry.id === id);
+    if (!task || Number(task.assigned_user_id) !== Number(user?.id)) return;
+    apiFetch(`http://localhost:8081/api/tasks/${id}/complete`, { method: 'POST' })
+      .then(async (response) => {
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(data.error || 'Impossible de terminer cette tâche.');
+        setTasks((current) => current.map((entry) => entry.id === id
+          ? { ...entry, status: 'completed' }
+          : entry));
+      })
+      .catch((error) => console.error(error));
   };
 
   const toggleShop = (id) => {
     const item = shopping.find((s) => s.id === id);
-    if (!item) return;
+    if (!item || item.purchased) return;
+    setPurchaseItem(item);
+    setPurchasePrice('');
+    setPurchaseError('');
+  };
 
-    const newPurchased = !item.purchased;
-
-    fetch(`http://localhost:8081/api/shopping/${id}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        householdId: item.household_id,
-        name: item.name,
-        purchased: newPurchased,
-        addedById: item.added_by,
-      }),
-    })
-      .then(async (res) => {
-        const data = await res.json();
-        if (!res.ok) {
-          throw new Error(data?.message || 'Failed to update shopping item');
-        }
-        setShopping((prev) =>
-          prev.map((s) => (s.id === id ? { ...s, purchased: newPurchased } : s))
-        );
-      })
-      .catch((err) => console.error('Failed to toggle shopping item', err));
+  const confirmPurchase = async (event) => {
+    event.preventDefault();
+    if (!purchaseItem) return;
+    try {
+      const response = await apiFetch(`http://localhost:8081/api/shopping/${purchaseItem.id}/purchase`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ price: Number(purchasePrice) }),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.error || 'Impossible d’enregistrer cet achat.');
+      setShopping((current) => current.map((item) => item.id === data.id ? {
+        ...item,
+        purchased: data.purchased,
+        purchasedPrice: data.purchasedPrice,
+        expenseId: data.expenseId,
+      } : item));
+      setPurchaseItem(null);
+    } catch (error) {
+      setPurchaseError(error.message);
+    }
   };
 
   return (
@@ -228,6 +242,7 @@ export default function Dashboard() {
                     task={task}
                     assignee={getMemberById(task.assigned_user_id)}
                     onComplete={toggleTask}
+                    canComplete={Number(task.assigned_user_id) === Number(user?.id)}
                   />
                 ))
               )}
@@ -343,6 +358,17 @@ export default function Dashboard() {
           </div>
         </div>
       </div>
+      <Modal isOpen={Boolean(purchaseItem)} onClose={() => setPurchaseItem(null)} title={`Acheter ${purchaseItem?.name || ''}`}>
+        <form className="app-form" onSubmit={confirmPurchase}>
+          <div className="app-form-group">
+            <label className="app-form-label" htmlFor="dashboard-purchase-price">Prix payé (MAD)</label>
+            <input id="dashboard-purchase-price" className="app-form-input" type="number" min="0.01" step="0.01"
+              value={purchasePrice} onChange={(event) => setPurchasePrice(event.target.value)} required autoFocus />
+          </div>
+          {purchaseError && <p className="form-error" role="alert">{purchaseError}</p>}
+          <AppButton type="submit" variant="primary" fullWidth>Confirmer l’achat</AppButton>
+        </form>
+      </Modal>
     </div>
   );
 }

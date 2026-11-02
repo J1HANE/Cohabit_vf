@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useHousehold } from '../../context/HouseholdContext';
 import { useAuth } from '../../context/AuthContext';
 import './HouseholdOnboarding.css';
+import { apiFetch } from '../../services/api';
 
 export default function HouseholdCreate() {
   const [name, setName] = useState('');
@@ -20,7 +21,7 @@ export default function HouseholdCreate() {
     setError('');
 
     try {
-      const res = await fetch('http://localhost:8081/api/households', {
+      const res = await apiFetch('http://localhost:8081/api/households', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name: name.trim(), userId: user.id }),

@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { useAuth } from './AuthContext';
+import { apiFetch } from '../services/api';
 
 const NotificationContext = createContext();
 
@@ -21,7 +22,7 @@ export function NotificationProvider({ children }) {
 
     setLoading(true);
     try {
-      const res = await fetch(`http://localhost:8081/api/notifications/user/${user.id}`);
+      const res = await apiFetch(`http://localhost:8081/api/notifications/user/${user.id}`);
       if (!res.ok) {
         throw new Error(`Notification request failed (${res.status})`);
       }
@@ -76,7 +77,7 @@ export function NotificationProvider({ children }) {
       );
       setUnreadCount((prev) => Math.max(0, prev - 1));
 
-      const res = await fetch(`http://localhost:8081/api/notifications/${id}/read`, {
+      const res = await apiFetch(`http://localhost:8081/api/notifications/${id}/read`, {
         method: 'PUT',
       });
       if (!res.ok) throw new Error(`Mark-read request failed (${res.status})`);
@@ -93,7 +94,7 @@ export function NotificationProvider({ children }) {
       setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
       setUnreadCount(0);
 
-      const res = await fetch(`http://localhost:8081/api/notifications/user/${user.id}/read-all`, {
+      const res = await apiFetch(`http://localhost:8081/api/notifications/user/${user.id}/read-all`, {
         method: 'PUT',
       });
       if (!res.ok) throw new Error(`Mark-all-read request failed (${res.status})`);

@@ -1,7 +1,9 @@
+import { apiFetch } from './api';
+
 const API_URL = 'http://localhost:8081/api/households';
 
 export const getHouseholds = async () => {
-    const response = await fetch(API_URL);
+    const response = await apiFetch(API_URL);
     if (!response.ok) {
         throw new Error('Failed to fetch households');
     }
@@ -9,7 +11,7 @@ export const getHouseholds = async () => {
 };
 
 export const getHousehold = async (id) => {
-    const response = await fetch(`${API_URL}/${id}`);
+    const response = await apiFetch(`${API_URL}/${id}`);
     if (!response.ok) {
         throw new Error(`Failed to fetch household with id ${id}`);
     }
@@ -17,7 +19,7 @@ export const getHousehold = async (id) => {
 };
 
 export const getHouseholdMembers = async (householdId) => {
-    const response = await fetch(`${API_URL}/${householdId}/members`);
+    const response = await apiFetch(`${API_URL}/${householdId}/members`);
     if (!response.ok) {
         throw new Error('Failed to fetch household members');
     }
@@ -25,7 +27,7 @@ export const getHouseholdMembers = async (householdId) => {
 };
 
 export const createHousehold = async (name, userId) => {
-    const response = await fetch(API_URL, {
+    const response = await apiFetch(API_URL, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -39,7 +41,7 @@ export const createHousehold = async (name, userId) => {
 };
 
 export const updateHousehold = async (id, name) => {
-    const response = await fetch(`${API_URL}/${id}`, {
+    const response = await apiFetch(`${API_URL}/${id}`, {
         method: 'PUT',
         headers: {
             'Content-Type': 'application/json',
@@ -53,7 +55,7 @@ export const updateHousehold = async (id, name) => {
 };
 
 export const deleteHousehold = async (id) => {
-    const response = await fetch(`${API_URL}/${id}`, {
+    const response = await apiFetch(`${API_URL}/${id}`, {
         method: 'DELETE',
     });
     if (!response.ok) {
@@ -62,7 +64,7 @@ export const deleteHousehold = async (id) => {
 };
 
 export const joinHousehold = async (inviteCode, userId) => {
-    const response = await fetch(`${API_URL}/join`, {
+    const response = await apiFetch(`${API_URL}/join`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -76,7 +78,7 @@ export const joinHousehold = async (inviteCode, userId) => {
 };
 
 export const leaveHousehold = async (userId) => {
-    const response = await fetch(`${API_URL}/leave`, {
+    const response = await apiFetch(`${API_URL}/leave`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -90,7 +92,7 @@ export const leaveHousehold = async (userId) => {
 };
 
 export const regenerateInviteCode = async (householdId) => {
-    const response = await fetch(`${API_URL}/${householdId}/regenerate-code`, {
+    const response = await apiFetch(`${API_URL}/${householdId}/regenerate-code`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',

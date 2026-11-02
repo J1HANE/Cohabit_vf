@@ -46,6 +46,7 @@ function ComplaintTicket({ complaint, onSave, saving }) {
         </div>
         <h2>{complaint.subject}</h2>
         <p className="admin-complaint-author">{complaint.userName} <span>{complaint.userEmail}</span></p>
+        {complaint.reportedUserName && <p className="admin-complaint-author">Utilisateur signalé : {complaint.reportedUserName}</p>}
       </header>
       <p className="admin-complaint-description">{complaint.description}</p>
       <form className="admin-complaint-response" onSubmit={handleSubmit}>

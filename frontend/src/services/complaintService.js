@@ -1,5 +1,7 @@
+import { apiFetch } from './api';
+
 async function request(path, options = {}) {
-  const response = await fetch(`/api/complaints${path}`, {
+  const response = await apiFetch(`/api/complaints${path}`, {
     ...options,
     headers: {
       ...(options.body ? { 'Content-Type': 'application/json' } : {}),

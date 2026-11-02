@@ -20,6 +20,7 @@ import Shopping from './pages/app/Shopping';
 import Profile from './pages/app/Profile';
 import HouseholdSettings from './pages/app/HouseholdSettings';
 import Notifications from './pages/app/Notifications';
+import Complaints from './pages/Complaints';
 import HouseholdCreate from './pages/household/HouseholdCreate';
 import HouseholdJoin from './pages/household/HouseholdJoin';
 import AdminLogin from './pages/admin/AdminLogin';
@@ -63,6 +64,7 @@ function App() {
               <Route path="dashboard" element={<Dashboard />} />
               <Route path="expenses" element={<Expenses />} />
               <Route path="expenses/new" element={<ExpenseNew />} />
+              <Route path="expenses/:id/edit" element={<ExpenseNew />} />
               <Route path="expenses/:id" element={<ExpenseDetail />} />
               <Route path="tasks" element={<Tasks />} />
               <Route path="tasks/new" element={<TaskNew />} />
@@ -73,6 +75,7 @@ function App() {
               <Route path="profile" element={<Profile />} />
               <Route path="household/settings" element={<HouseholdSettings />} />
               <Route path="notifications" element={<Notifications />} />
+              <Route path="complaints" element={<Complaints />} />
             </Route>
 
             {/* Fallback */}

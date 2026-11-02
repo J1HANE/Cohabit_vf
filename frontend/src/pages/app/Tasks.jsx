@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useHousehold } from '../../context/HouseholdContext';
+import { useAuth } from '../../context/AuthContext';
 import {
   PageHeader,
   AppButton,
@@ -8,13 +9,15 @@ import {
   EmptyState,
 } from '../../components/shared/SharedComponents';
 import SpinWheel from '../../components/SpinWheel/SpinWheel';
+import { apiFetch } from '../../services/api';
 import './Tasks.css';
 
 const TABS = ['Today', 'Upcoming', 'Completed'];
 
 export default function Tasks() {
   const navigate = useNavigate();
-  const { household, getMemberById, members } = useHousehold();
+  const { getMemberById, members } = useHousehold();
+  const { user } = useAuth();
   const [tasks, setTasks] = useState([]);
   const [activeTab, setActiveTab] = useState('Today');
   const [showSpinWheel, setShowSpinWheel] = useState(false);
@@ -22,7 +25,7 @@ export default function Tasks() {
 
 
   useEffect(() => {
-    fetch('http://localhost:8081/api/tasks')
+    apiFetch('http://localhost:8081/api/tasks')
       .then(res => res.json())
       .then(data => {
         // Map backend properties to frontend if necessary, or just set it
@@ -31,7 +34,7 @@ export default function Tasks() {
         const mappedData = data.map(t => ({
           ...t,
           due_date: t.dueDate,
-          status: t.status,
+          status: (t.status || 'pending').toLowerCase(),
           assigned_user_id: t.assignedUserId,
         }));
         setTasks(mappedData);
@@ -54,20 +57,9 @@ export default function Tasks() {
     const taskToUpdate = tasks.find(t => t.id === id);
     if (!taskToUpdate) return;
 
-    const updatedStatus = taskToUpdate.status === 'completed' ? 'pending' : 'completed';
+    if (Number(taskToUpdate.assigned_user_id) !== Number(user?.id)) return;
 
-    fetch(`http://localhost:8081/api/tasks/${id}`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        ...taskToUpdate,
-        status: updatedStatus,
-        dueDate: taskToUpdate.due_date,
-        assignedUserId: taskToUpdate.assigned_user_id
-      })
-    })
+    apiFetch(`http://localhost:8081/api/tasks/${id}/complete`, { method: 'POST' })
     .then(res => res.json())
     .then(updatedTask => {
       setTasks((prev) =>
@@ -86,7 +78,7 @@ export default function Tasks() {
   };
 
   const reassignTask = (task, newAssignee) => {
-    fetch(`http://localhost:8081/api/tasks/${task.id}`, {
+    apiFetch(`http://localhost:8081/api/tasks/${task.id}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json'
@@ -205,6 +197,7 @@ export default function Tasks() {
               key={task.id}
               task={task}
               assignee={getMemberById(task.assigned_user_id)}
+              canComplete={Number(task.assigned_user_id) === Number(user?.id)}
               onComplete={toggleTask}
               onReassign={(task) => {
                 setTaskToReassign(task);

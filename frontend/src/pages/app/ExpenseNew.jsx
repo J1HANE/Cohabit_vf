@@ -1,15 +1,17 @@
-import React, { useState, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useRef, useEffect } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 import { PageHeader, AppButton, HouseholdMemberAvatar } from '../../components/shared/SharedComponents';
 import { useAuth } from '../../context/AuthContext';
 import { useHousehold } from '../../context/HouseholdContext';
 import { useNotifications } from '../../context/NotificationContext';
+import { apiFetch } from '../../services/api';
 import './ExpenseNew.css';
 
 const EMOJIS = ['🛒', '🍕', '⚡', '📡', '🏠', '🚗', '💊', '🎉', '☕', '🍔', '💸'];
 
 export default function ExpenseNew() {
   const navigate = useNavigate();
+  const { id } = useParams();
   const { user } = useAuth();
   const { household, members } = useHousehold();
   const { fetchNotifications } = useNotifications();
@@ -29,7 +31,38 @@ export default function ExpenseNew() {
   const [submitting, setSubmitting] = useState(false);
   const [file, setFile] = useState(null);
   const [filePreview, setFilePreview] = useState(null);
+  const [existingAttachmentUrl, setExistingAttachmentUrl] = useState(null);
+  const [createdById, setCreatedById] = useState(null);
+  const [loadingExpense, setLoadingExpense] = useState(Boolean(id));
   const fileInputRef = useRef(null);
+
+  useEffect(() => {
+    if (!id) return;
+    apiFetch(`http://localhost:8081/api/expenses/${id}`)
+      .then(async (response) => {
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(data.error || 'Dépense introuvable.');
+        setForm({
+          label: data.label || '',
+          amount: String(data.amount ?? ''),
+          payer_id: data.payerId || '',
+          expense_date: data.expenseDate || new Date().toISOString().slice(0, 10),
+          emoji: data.emoji || '🛒',
+        });
+        setExistingAttachmentUrl(data.attachmentUrl || null);
+        setCreatedById(data.createdById);
+        const existingShares = new Map((data.shares || []).map((share) => [
+          Number(share.userId), String(share.shareAmount ?? ''),
+        ]));
+        setShares(members.map((member) => ({
+          user_id: member.id,
+          selected: existingShares.has(Number(member.id)),
+          share_amount: existingShares.get(Number(member.id)) || '',
+        })));
+      })
+      .catch((loadError) => setErrors({ submit: loadError.message }))
+      .finally(() => setLoadingExpense(false));
+  }, [id, members]);
 
   const totalAmount = parseFloat(form.amount) || 0;
   const totalShares = shares
@@ -40,10 +73,18 @@ export default function ExpenseNew() {
   const splitEvenly = () => {
     const selected = shares.filter((s) => s.selected);
     if (!selected.length || !totalAmount) return;
-    const perPerson = (totalAmount / selected.length).toFixed(2);
+    const totalCents = Math.round(totalAmount * 100);
+    const baseCents = Math.floor(totalCents / selected.length);
+    const extraCents = totalCents % selected.length;
+    let selectedIndex = 0;
     setShares((prev) =>
       prev.map((s) =>
-        s.selected ? { ...s, share_amount: perPerson } : { ...s, share_amount: '' }
+        s.selected
+          ? {
+              ...s,
+              share_amount: ((baseCents + (selectedIndex++ < extraCents ? 1 : 0)) / 100).toFixed(2),
+            }
+          : { ...s, share_amount: '' }
       )
     );
   };
@@ -117,13 +158,13 @@ export default function ExpenseNew() {
 
     setSubmitting(true);
     try {
-      let attachmentUrl = null;
+      let attachmentUrl = existingAttachmentUrl;
 
       // Upload file if selected
       if (file) {
         const formData = new FormData();
         formData.append('file', file);
-        const uploadRes = await fetch('http://localhost:8081/api/upload', {
+        const uploadRes = await apiFetch('http://localhost:8081/api/upload', {
           method: 'POST',
           body: formData,
         });
@@ -150,17 +191,19 @@ export default function ExpenseNew() {
           .map((s) => ({ userId: s.user_id, shareAmount: parseFloat(s.share_amount) })),
       };
 
-      const res = await fetch('http://localhost:8081/api/expenses', {
-        method: 'POST',
+      const res = await apiFetch(id
+        ? `http://localhost:8081/api/expenses/${id}`
+        : 'http://localhost:8081/api/expenses', {
+        method: id ? 'PUT' : 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       });
       if (res.ok) {
         await fetchNotifications();
-        navigate('/expenses');
+        navigate(id ? `/expenses/${id}` : '/expenses');
       } else {
         const err = await res.json().catch(() => ({}));
-        setErrors({ submit: err.message || 'Failed to save expense. Please try again.' });
+        setErrors({ submit: err.error || err.message || 'Failed to save expense. Please try again.' });
       }
     } catch (err) {
       setErrors({ submit: err.message || 'Could not reach the server. Check your connection.' });
@@ -169,13 +212,18 @@ export default function ExpenseNew() {
     }
   };
 
+  if (loadingExpense) return <div className="page-fade" style={{ padding: '2rem' }}>Chargement...</div>;
+  if (id && createdById !== null && Number(createdById) !== Number(user?.id)) {
+    return <div className="page-fade"><PageHeader title="Accès refusé" /><p>Seul le créateur peut modifier cette dépense.</p></div>;
+  }
+
   return (
     <div className="expense-new-page page-fade">
       <PageHeader
-        title="Add Expense"
-        subtitle="Record a new household expense"
+        title={id ? 'Modifier la dépense' : 'Add Expense'}
+        subtitle={id ? 'Mettre à jour les détails de cette dépense' : 'Record a new household expense'}
         action={
-          <AppButton variant="ghost" size="md" onClick={() => navigate('/expenses')}>
+          <AppButton variant="ghost" size="md" onClick={() => navigate(id ? `/expenses/${id}` : '/expenses')}>
             Cancel
           </AppButton>
         }

@@ -8,15 +8,14 @@ import {
 } from '../../components/shared/SharedComponents';
 import { useHousehold } from '../../context/HouseholdContext';
 import { useAuth } from '../../context/AuthContext';
+import { apiFetch } from '../../services/api';
 import './HouseholdSettings.css';
 
 export default function HouseholdSettings() {
   const navigate = useNavigate();
-  const { household, members, setHouseholdData, clearHousehold } = useHousehold();
+  const { household, members, setHouseholdData, clearHousehold, refreshHousehold } = useHousehold();
   const { user, logout } = useAuth();
-  const [householdName, setHouseholdName] = useState(
-    household?.name || ''
-  );
+  const [householdName, setHouseholdName] = useState(null);
   const [copied, setCopied] = useState(false);
   const [showLeaveModal, setShowLeaveModal] = useState(false);
   const [showRevokeModal, setShowRevokeModal] = useState(false);
@@ -25,7 +24,10 @@ export default function HouseholdSettings() {
   const [nameSaved, setNameSaved] = useState(false);
   const [saveError, setSaveError] = useState(null);
 
+  const displayedHouseholdName = householdName ?? household?.name ?? '';
+
   const inviteCode = household?.invite_code || household?.inviteCode || '';
+  const isHouseholdAdmin = Number(household?.administrator_id || household?.administratorId) === Number(user?.id);
 
   const copyCode = () => {
     navigator.clipboard.writeText(inviteCode).catch(() => {});
@@ -43,10 +45,10 @@ export default function HouseholdSettings() {
     }
 
     try {
-      const res = await fetch(`http://localhost:8081/api/households/${household.id}`, {
+      const res = await apiFetch(`http://localhost:8081/api/households/${household.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: householdName }),
+        body: JSON.stringify({ name: displayedHouseholdName }),
       });
       if (res.ok) {
         const updated = await res.json();
@@ -66,7 +68,7 @@ export default function HouseholdSettings() {
     if (!household?.id) return;
     setRegenerating(true);
     try {
-      const res = await fetch(`http://localhost:8081/api/households/${household.id}/regenerate-code`, {
+      const res = await apiFetch(`http://localhost:8081/api/households/${household.id}/regenerate-code`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
       });
@@ -87,17 +89,46 @@ export default function HouseholdSettings() {
     }
   };
 
+  const handleRemoveMember = async (member) => {
+    if (!window.confirm(`Retirer ${member.name} de ce foyer ?`)) return;
+    const response = await apiFetch(`http://localhost:8081/api/households/${household.id}/members/${member.id}`, {
+      method: 'DELETE',
+    });
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}));
+      setSaveError(error.error || 'Impossible de retirer ce membre.');
+      return;
+    }
+    await refreshHousehold();
+  };
+
+  const handleAppointAdmin = async (member) => {
+    if (!window.confirm(`Nommer ${member.name} administrateur du foyer ?`)) return;
+    const response = await apiFetch(`http://localhost:8081/api/households/${household.id}/administrator/${member.id}`, {
+      method: 'PUT',
+    });
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}));
+      setSaveError(error.error || 'Impossible de transférer l’administration.');
+      return;
+    }
+    const updated = await response.json();
+    setHouseholdData(updated, members);
+    await refreshHousehold();
+  };
+
   const handleLeave = async () => {
     try {
-      if (user?.id) {
-        await fetch('http://localhost:8081/api/households/leave', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ userId: user.id }),
-        });
+      const response = await apiFetch('http://localhost:8081/api/households/leave', { method: 'POST' });
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({}));
+        setSaveError(error.error || 'Impossible de quitter le foyer.');
+        setShowLeaveModal(false);
+        return;
       }
-    } catch (err) {
-      console.error('Failed to leave household on backend', err);
+    } catch {
+      setSaveError('Impossible de joindre le serveur.');
+      return;
     }
     clearHousehold();
     logout();
@@ -121,12 +152,12 @@ export default function HouseholdSettings() {
       <div className="app-card hs-card">
         <h3 className="profile-section-title">Household Name</h3>
         {saveError && <p style={{ color: '#ef4444', marginBottom: '0.5rem', fontSize: '0.85rem' }}>{saveError}</p>}
-        <form onSubmit={handleSaveName} className="app-form">
+        {isHouseholdAdmin ? <form onSubmit={handleSaveName} className="app-form">
           <div className="app-form-group">
             <label className="app-form-label">Name</label>
             <input
               className="app-form-input"
-              value={householdName}
+              value={displayedHouseholdName}
               onChange={(e) => setHouseholdName(e.target.value)}
               placeholder="Household name"
             />
@@ -134,7 +165,7 @@ export default function HouseholdSettings() {
           <AppButton type="submit" variant="primary" size="md">
             {nameSaved ? '✓ Saved!' : 'Save name'}
           </AppButton>
-        </form>
+        </form> : <p>{displayedHouseholdName}</p>}
       </div>
 
       {/* Members */}
@@ -149,8 +180,20 @@ export default function HouseholdSettings() {
                 <HouseholdMemberAvatar member={member} size="md" />
                 <div className="member-row-info">
                   <span className="member-row-name">{member.name}</span>
-                  <span className="member-row-email">{member.email}</span>
+                  <span className="member-row-email">
+                    {member.email}{Number(member.id) === Number(household?.administrator_id) ? ' · Administrateur' : ''}
+                  </span>
                 </div>
+                {isHouseholdAdmin && Number(member.id) !== Number(user?.id) && (
+                  <div className="member-row-actions">
+                    <AppButton variant="ghost" size="sm" onClick={() => handleAppointAdmin(member)}>
+                      Nommer admin
+                    </AppButton>
+                    <AppButton variant="danger" size="sm" onClick={() => handleRemoveMember(member)}>
+                      Retirer
+                    </AppButton>
+                  </div>
+                )}
               </div>
             ))
           )}
@@ -176,13 +219,13 @@ export default function HouseholdSettings() {
             >
               {copied ? '✓ Copied!' : 'Copy code'}
             </AppButton>
-            <AppButton
+            {isHouseholdAdmin && <AppButton
               variant="warning"
               size="md"
               onClick={() => setShowRevokeModal(true)}
             >
               Régénérer / Révoquer
-            </AppButton>
+            </AppButton>}
           </div>
         </div>
       </div>
@@ -240,7 +283,7 @@ export default function HouseholdSettings() {
         title="Leave household?"
       >
         <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.9rem', marginBottom: '1.5rem', lineHeight: 1.6 }}>
-          Are you sure you want to leave <strong style={{ color: '#fff' }}>{householdName}</strong>? You will lose access to all shared data. This action cannot be undone.
+          Are you sure you want to leave <strong style={{ color: '#fff' }}>{displayedHouseholdName}</strong>? You will lose access to all shared data. This action cannot be undone.
         </p>
         <div style={{ display: 'flex', gap: '0.75rem' }}>
           <AppButton

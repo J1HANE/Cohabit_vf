@@ -13,7 +13,7 @@ export default function AdminLayout() {
   const adminUser = getAdminUser();
   const navigate = useNavigate();
 
-  if (adminUser?.role !== 'ADMIN') {
+  if (adminUser?.role !== 'ADMIN' || !adminUser?.token) {
     return <Navigate to="/admin/login" replace />;
   }
 

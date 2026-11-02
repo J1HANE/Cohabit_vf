@@ -68,7 +68,7 @@ export function ExpenseCard({ expense, payer, onClick }) {
 }
 
 /* ── TaskCard ── */
-export function TaskCard({ task, assignee, onComplete, onReassign }) {
+export function TaskCard({ task, assignee, onComplete, onReassign, canComplete = true }) {
   const isOverdue = task.due_date && new Date(task.due_date) < new Date() && task.status !== 'completed';
   const isToday = task.due_date && new Date(task.due_date).toDateString() === new Date().toDateString();
 
@@ -77,6 +77,7 @@ export function TaskCard({ task, assignee, onComplete, onReassign }) {
       <button
         className={`task-check${task.status === 'completed' ? ' checked' : ''}`}
         onClick={(e) => { e.stopPropagation(); onComplete && onComplete(task.id); }}
+        disabled={!canComplete || task.status === 'completed'}
         aria-label="Mark complete"
       >
         {task.status === 'completed' ? '✓' : ''}
@@ -117,13 +118,18 @@ export function ShoppingItem({ item, adder, onToggle, onDelete }) {
       <button
         className={`shopping-check${item.purchased ? ' checked' : ''}`}
         onClick={() => onToggle && onToggle(item.id)}
-        aria-label={item.purchased ? 'Mark unpurchased' : 'Mark purchased'}
+        disabled={item.purchased}
+        aria-label={item.purchased ? 'Purchased' : 'Record purchase'}
       >
         {item.purchased ? '✓' : ''}
       </button>
       <div className="shopping-item-info">
         <span className="shopping-item-name">{item.name}</span>
-        <span className="shopping-item-meta">Added by {adder?.name || 'Unknown'}</span>
+        <span className="shopping-item-meta">
+          {item.purchased
+            ? `Acheté ${Number(item.purchasedPrice || 0).toFixed(2)} MAD`
+            : `Added by ${adder?.name || 'Unknown'}`}
+        </span>
       </div>
       <button
         className="shopping-delete"

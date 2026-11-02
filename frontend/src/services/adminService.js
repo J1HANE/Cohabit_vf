@@ -1,7 +1,9 @@
+import { apiFetch } from './api';
+
 const API_BASE_URL = '/api/admin';
 
 async function request(path, options = {}) {
-  const response = await fetch(`${API_BASE_URL}${path}`, {
+  const response = await apiFetch(`${API_BASE_URL}${path}`, {
     ...options,
     headers: {
       ...(options.body ? { 'Content-Type': 'application/json' } : {}),

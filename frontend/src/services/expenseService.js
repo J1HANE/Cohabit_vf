@@ -1,7 +1,9 @@
+import { apiFetch } from './api';
+
 const API_URL = 'http://localhost:8081/api/expenses';
 
 export const getExpenses = async () => {
-    const response = await fetch(API_URL);
+    const response = await apiFetch(API_URL);
     if (!response.ok) {
         throw new Error('Failed to fetch expenses');
     }
@@ -9,7 +11,7 @@ export const getExpenses = async () => {
 };
 
 export const getExpensesByHousehold = async (householdId) => {
-    const response = await fetch(`${API_URL}/household/${householdId}`);
+    const response = await apiFetch(`${API_URL}/household/${householdId}`);
     if (!response.ok) {
         throw new Error('Failed to fetch expenses for household');
     }
@@ -17,7 +19,7 @@ export const getExpensesByHousehold = async (householdId) => {
 };
 
 export const getExpense = async (id) => {
-    const response = await fetch(`${API_URL}/${id}`);
+    const response = await apiFetch(`${API_URL}/${id}`);
     if (!response.ok) {
         throw new Error(`Failed to fetch expense with id ${id}`);
     }
@@ -25,7 +27,7 @@ export const getExpense = async (id) => {
 };
 
 export const createExpense = async (expense) => {
-    const response = await fetch(API_URL, {
+    const response = await apiFetch(API_URL, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -39,7 +41,7 @@ export const createExpense = async (expense) => {
 };
 
 export const updateExpense = async (id, expense) => {
-    const response = await fetch(`${API_URL}/${id}`, {
+    const response = await apiFetch(`${API_URL}/${id}`, {
         method: 'PUT',
         headers: {
             'Content-Type': 'application/json',
@@ -53,7 +55,7 @@ export const updateExpense = async (id, expense) => {
 };
 
 export const deleteExpense = async (id) => {
-    const response = await fetch(`${API_URL}/${id}`, {
+    const response = await apiFetch(`${API_URL}/${id}`, {
         method: 'DELETE',
     });
     if (!response.ok) {
@@ -62,7 +64,7 @@ export const deleteExpense = async (id) => {
 };
 
 export const settleExpense = async (id, userId, amount) => {
-    const response = await fetch(`${API_URL}/${id}/settle`, {
+    const response = await apiFetch(`${API_URL}/${id}/settle`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',

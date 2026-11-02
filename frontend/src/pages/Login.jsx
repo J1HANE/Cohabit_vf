@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useHousehold } from '../context/HouseholdContext';
+import { apiFetch } from '../services/api';
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -16,7 +17,7 @@ export default function Login() {
     setError('');
     
     try {
-      const response = await fetch('http://localhost:8081/api/auth/login', {
+      const response = await apiFetch('/api/auth/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -33,8 +34,8 @@ export default function Login() {
         if (data.householdId) {
           try {
             const [householdRes, membersRes] = await Promise.all([
-              fetch(`http://localhost:8081/api/households/${data.householdId}`),
-              fetch(`http://localhost:8081/api/households/${data.householdId}/members`),
+              apiFetch(`http://localhost:8081/api/households/${data.householdId}`),
+              apiFetch(`http://localhost:8081/api/households/${data.householdId}/members`),
             ]);
             const household = householdRes.ok ? await householdRes.json() : { id: data.householdId };
             const members = membersRes.ok ? await membersRes.json() : [];

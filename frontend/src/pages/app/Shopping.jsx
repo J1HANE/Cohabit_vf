@@ -1,44 +1,100 @@
-import React, { useState } from 'react';
-import { PageHeader, AppButton, ShoppingItem, EmptyState } from '../../components/shared/SharedComponents';
+import React, { useCallback, useEffect, useState } from 'react';
+import { PageHeader, AppButton, ShoppingItem, EmptyState, Modal } from '../../components/shared/SharedComponents';
 import { useHousehold } from '../../context/HouseholdContext';
 import { useAuth } from '../../context/AuthContext';
-import { MOCK_SHOPPING } from '../../data/mockData';
+import { apiFetch } from '../../services/api';
 import './Shopping.css';
 
 export default function Shopping() {
   const { user } = useAuth();
   const { household, getMemberById } = useHousehold();
-  const [items, setItems] = useState(MOCK_SHOPPING);
+  const [items, setItems] = useState([]);
   const [newItem, setNewItem] = useState('');
-  const currentUserId = user?.id || 1;
+  const [purchaseItem, setPurchaseItem] = useState(null);
+  const [price, setPrice] = useState('');
+  const [error, setError] = useState('');
+  const householdId = household?.id || user?.householdId;
+
+  const loadItems = useCallback(async () => {
+    if (!householdId) {
+      setItems([]);
+      return;
+    }
+    const response = await apiFetch(`http://localhost:8081/api/shopping/household/${householdId}`);
+    if (!response.ok) throw new Error('Impossible de charger la liste.');
+    setItems(await response.json());
+  }, [householdId]);
+
+  useEffect(() => {
+    loadItems().catch((loadError) => setError(loadError.message));
+  }, [loadItems]);
 
   const toggleItem = (id) => {
-    setItems((prev) =>
-      prev.map((i) => (i.id === id ? { ...i, purchased: !i.purchased } : i))
-    );
+    const item = items.find((entry) => entry.id === id);
+    if (!item || item.purchased) return;
+    setPurchaseItem(item);
+    setPrice('');
+    setError('');
   };
 
-  const deleteItem = (id) => {
-    setItems((prev) => prev.filter((i) => i.id !== id));
+  const deleteItem = async (id) => {
+    const response = await apiFetch(`http://localhost:8081/api/shopping/${id}`, { method: 'DELETE' });
+    if (!response.ok) {
+      setError('Impossible de supprimer cet article.');
+      return;
+    }
+    setItems((prev) => prev.filter((item) => item.id !== id));
   };
 
-  const addItem = (e) => {
+  const addItem = async (e) => {
     e.preventDefault();
-    if (!newItem.trim()) return;
-    const item = {
-      id: Date.now(),
-      household_id: household?.id || 1,
-      name: newItem.trim(),
-      purchased: false,
-      added_by: currentUserId,
-      created_at: new Date().toISOString(),
-    };
-    setItems((prev) => [item, ...prev]);
-    setNewItem('');
+    if (!newItem.trim() || !householdId) return;
+    try {
+      const response = await apiFetch('http://localhost:8081/api/shopping', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ householdId, name: newItem.trim() }),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.error || 'Impossible d’ajouter cet article.');
+      setItems((prev) => [data, ...prev]);
+      setNewItem('');
+      setError('');
+    } catch (addError) {
+      setError(addError.message);
+    }
   };
 
-  const clearPurchased = () => {
-    setItems((prev) => prev.filter((i) => !i.purchased));
+  const confirmPurchase = async (event) => {
+    event.preventDefault();
+    if (!purchaseItem) return;
+    try {
+      const response = await apiFetch(`http://localhost:8081/api/shopping/${purchaseItem.id}/purchase`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ price: Number(price) }),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.error || 'Impossible d’enregistrer cet achat.');
+      setItems((prev) => prev.map((item) => item.id === data.id ? data : item));
+      setPurchaseItem(null);
+      setError('');
+    } catch (purchaseError) {
+      setError(purchaseError.message);
+    }
+  };
+
+  const clearPurchased = async () => {
+    const purchasedItems = items.filter((item) => item.purchased);
+    const results = await Promise.all(purchasedItems.map((item) =>
+      apiFetch(`http://localhost:8081/api/shopping/${item.id}`, { method: 'DELETE' })
+    ));
+    if (results.some((response) => !response.ok)) {
+      setError('Certains articles achetés n’ont pas pu être supprimés.');
+      await loadItems();
+      return;
+    }
+    setItems((prev) => prev.filter((item) => !item.purchased));
   };
 
   const pending = items.filter((i) => !i.purchased);
@@ -57,6 +113,7 @@ export default function Shopping() {
           )
         }
       />
+      {error && <p className="form-error" role="alert">{error}</p>}
 
       {/* Add item form */}
       <form onSubmit={addItem} className="shopping-add-form">
@@ -82,7 +139,7 @@ export default function Shopping() {
               <ShoppingItem
                 key={item.id}
                 item={item}
-                adder={getMemberById(item.added_by)}
+                adder={getMemberById(item.added_by || item.addedById)}
                 onToggle={toggleItem}
                 onDelete={deleteItem}
               />
@@ -102,7 +159,7 @@ export default function Shopping() {
               <ShoppingItem
                 key={item.id}
                 item={item}
-                adder={getMemberById(item.added_by)}
+                adder={getMemberById(item.added_by || item.addedById)}
                 onToggle={toggleItem}
                 onDelete={deleteItem}
               />
@@ -119,6 +176,30 @@ export default function Shopping() {
           description="Add items to your household shopping list."
         />
       )}
+
+      <Modal
+        isOpen={Boolean(purchaseItem)}
+        onClose={() => setPurchaseItem(null)}
+        title={`Acheter ${purchaseItem?.name || ''}`}
+      >
+        <form onSubmit={confirmPurchase} className="app-form">
+          <div className="app-form-group">
+            <label className="app-form-label" htmlFor="shopping-purchase-price">Prix payé (MAD)</label>
+            <input
+              id="shopping-purchase-price"
+              className="app-form-input"
+              type="number"
+              min="0.01"
+              step="0.01"
+              value={price}
+              onChange={(event) => setPrice(event.target.value)}
+              required
+              autoFocus
+            />
+          </div>
+          <AppButton type="submit" variant="primary" fullWidth>Confirmer l’achat</AppButton>
+        </form>
+      </Modal>
     </div>
   );
 }

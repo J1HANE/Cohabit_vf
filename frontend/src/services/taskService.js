@@ -1,7 +1,9 @@
+import { apiFetch } from './api';
+
 const API_URL = 'http://localhost:8081/api/tasks';
 
 export const getTasks = async () => {
-    const response = await fetch(API_URL);
+    const response = await apiFetch(API_URL);
     if (!response.ok) {
         throw new Error('Failed to fetch tasks');
     }
@@ -9,7 +11,7 @@ export const getTasks = async () => {
 };
 
 export const getTask = async (id) => {
-    const response = await fetch(`${API_URL}/${id}`);
+    const response = await apiFetch(`${API_URL}/${id}`);
     if (!response.ok) {
         throw new Error(`Failed to fetch task with id ${id}`);
     }
@@ -17,7 +19,7 @@ export const getTask = async (id) => {
 };
 
 export const createTask = async (task) => {
-    const response = await fetch(API_URL, {
+    const response = await apiFetch(API_URL, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -31,7 +33,7 @@ export const createTask = async (task) => {
 };
 
 export const updateTask = async (id, task) => {
-    const response = await fetch(`${API_URL}/${id}`, {
+    const response = await apiFetch(`${API_URL}/${id}`, {
         method: 'PUT',
         headers: {
             'Content-Type': 'application/json',
@@ -45,7 +47,7 @@ export const updateTask = async (id, task) => {
 };
 
 export const deleteTask = async (id) => {
-    const response = await fetch(`${API_URL}/${id}`, {
+    const response = await apiFetch(`${API_URL}/${id}`, {
         method: 'DELETE',
     });
     if (!response.ok) {

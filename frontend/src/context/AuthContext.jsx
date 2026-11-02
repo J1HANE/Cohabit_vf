@@ -10,12 +10,29 @@ export function AuthProvider({ children }) {
     const stored = localStorage.getItem('cohabit_user');
     if (stored) {
       try {
-        setUser(JSON.parse(stored));
+        const storedUser = JSON.parse(stored);
+        if (storedUser?.token) {
+          setUser(storedUser);
+        } else {
+          localStorage.removeItem('cohabit_user');
+          localStorage.removeItem('cohabit_household');
+        }
       } catch {
         localStorage.removeItem('cohabit_user');
+        localStorage.removeItem('cohabit_household');
       }
     }
     setLoading(false);
+  }, []);
+
+  useEffect(() => {
+    const handleAuthRequired = () => {
+      setUser(null);
+      localStorage.removeItem('cohabit_user');
+      localStorage.removeItem('cohabit_household');
+    };
+    window.addEventListener('cohabit:auth-required', handleAuthRequired);
+    return () => window.removeEventListener('cohabit:auth-required', handleAuthRequired);
   }, []);
 
   const login = (userData) => {
