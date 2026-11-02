@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
 import { useHousehold } from '../../context/HouseholdContext';
 import {
   PageHeader,
@@ -14,6 +15,7 @@ const TABS = ['Today', 'Upcoming', 'Completed'];
 
 export default function Tasks() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const { household, getMemberById, members } = useHousehold();
   const [tasks, setTasks] = useState([]);
   const [activeTab, setActiveTab] = useState('Today');
@@ -59,7 +61,8 @@ export default function Tasks() {
     fetch(`http://localhost:8081/api/tasks/${id}`, {
       method: 'PUT',
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'X-User-Id': String(user?.id ?? ''),
       },
       body: JSON.stringify({
         ...taskToUpdate,
@@ -68,7 +71,10 @@ export default function Tasks() {
         assignedUserId: taskToUpdate.assigned_user_id
       })
     })
-    .then(res => res.json())
+    .then(res => {
+      if (!res.ok) throw new Error('Only the assigned person can mark this task as completed.');
+      return res.json();
+    })
     .then(updatedTask => {
       setTasks((prev) =>
         prev.map((t) =>
@@ -89,7 +95,8 @@ export default function Tasks() {
     fetch(`http://localhost:8081/api/tasks/${task.id}`, {
       method: 'PUT',
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'X-User-Id': String(user?.id ?? ''),
       },
       body: JSON.stringify({
         ...task,
@@ -205,6 +212,7 @@ export default function Tasks() {
               key={task.id}
               task={task}
               assignee={getMemberById(task.assigned_user_id)}
+              canComplete={String(task.assigned_user_id) === String(user?.id)}
               onComplete={toggleTask}
               onReassign={(task) => {
                 setTaskToReassign(task);

@@ -2,6 +2,7 @@ package com.cohabit.cohabit.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Size;
 import java.time.LocalDateTime;
 
 @Entity
@@ -17,9 +18,16 @@ public class ShoppingItem {
     @JsonIgnore
     private Household household;
 
+    @Size(max = 140)
     private String name;
 
     private Boolean purchased;
+
+    @Column(name = "purchase_price", precision = 12, scale = 2)
+    private java.math.BigDecimal purchasePrice;
+
+    @Column(name = "purchase_expense_id")
+    private Long purchaseExpenseId;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "added_by")
@@ -55,6 +63,12 @@ public class ShoppingItem {
 
     public Boolean getPurchased() { return purchased; }
     public void setPurchased(Boolean purchased) { this.purchased = purchased; }
+
+    public java.math.BigDecimal getPurchasePrice() { return purchasePrice; }
+    public void setPurchasePrice(java.math.BigDecimal purchasePrice) { this.purchasePrice = purchasePrice; }
+
+    public Long getPurchaseExpenseId() { return purchaseExpenseId; }
+    public void setPurchaseExpenseId(Long purchaseExpenseId) { this.purchaseExpenseId = purchaseExpenseId; }
 
     public User getAddedBy() { return addedBy; }
     public void setAddedBy(User addedBy) { this.addedBy = addedBy; }

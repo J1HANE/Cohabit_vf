@@ -6,6 +6,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.NotNull;
+import java.math.BigDecimal;
 
 import java.util.List;
 
@@ -39,7 +42,24 @@ public class ShoppingItemController {
     public ResponseEntity<?> updateShoppingItem(@PathVariable Long id, @Valid @RequestBody ShoppingItem shoppingItem) {
         try {
             return ResponseEntity.ok(shoppingItemService.updateShoppingItem(id, shoppingItem));
+        } catch (IllegalStateException e) {
+            return ResponseEntity.badRequest().body(java.util.Map.of("error", e.getMessage()));
         } catch (RuntimeException e) {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
+    @PostMapping("/{id}/purchase")
+    public ResponseEntity<?> purchaseShoppingItem(@PathVariable Long id,
+                                                   @Valid @RequestBody PurchaseRequest request) {
+        try {
+            return ResponseEntity.ok(shoppingItemService.purchaseShoppingItem(
+                    id, request.price(), request.purchaserId()));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(java.util.Map.of("error", e.getMessage()));
+        } catch (IllegalStateException e) {
+            return ResponseEntity.status(409).body(java.util.Map.of("error", e.getMessage()));
+        } catch (java.util.NoSuchElementException e) {
             return ResponseEntity.notFound().build();
         }
     }
@@ -49,4 +69,8 @@ public class ShoppingItemController {
         shoppingItemService.deleteShoppingItem(id);
         return ResponseEntity.noContent().build();
     }
+
+    public record PurchaseRequest(
+            @NotNull @DecimalMin(value = "0.01") BigDecimal price,
+            @NotNull Long purchaserId) {}
 }

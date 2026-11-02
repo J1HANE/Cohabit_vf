@@ -4,6 +4,7 @@ import com.cohabit.cohabit.entity.Task;
 import com.cohabit.cohabit.service.TaskService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import jakarta.validation.Valid;
 
@@ -38,9 +39,13 @@ public class TaskController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Task> updateTask(@PathVariable Long id, @Valid @RequestBody Task task) {
+    public ResponseEntity<?> updateTask(@PathVariable Long id, @Valid @RequestBody Task task,
+                                        @RequestHeader(value = "X-User-Id", required = false) Long userId) {
         try {
-            return ResponseEntity.ok(taskService.updateTask(id, task));
+            return ResponseEntity.ok(taskService.updateTask(id, task, userId));
+        } catch (org.springframework.security.access.AccessDeniedException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(java.util.Map.of("error", e.getMessage()));
         } catch (RuntimeException e) {
             return ResponseEntity.notFound().build();
         }

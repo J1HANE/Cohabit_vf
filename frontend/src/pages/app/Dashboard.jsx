@@ -80,6 +80,7 @@ export default function Dashboard() {
             ...s,
             added_by: s.addedById || s.added_by,
             created_at: s.createdAt || s.created_at,
+            purchase_price: s.purchasePrice ?? s.purchase_price,
           }));
           setShopping(mappedData);
         })
@@ -118,30 +119,30 @@ export default function Dashboard() {
 
   const toggleShop = (id) => {
     const item = shopping.find((s) => s.id === id);
-    if (!item) return;
+    if (!item || item.purchased) return;
+    const enteredPrice = window.prompt(`Prix payé pour « ${item.name} » (MAD)`);
+    if (enteredPrice === null) return;
+    const price = Number(enteredPrice);
+    if (!Number.isFinite(price) || price <= 0) {
+      window.alert('Saisissez un prix supérieur à zéro.');
+      return;
+    }
 
-    const newPurchased = !item.purchased;
-
-    fetch(`http://localhost:8081/api/shopping/${id}`, {
-      method: 'PUT',
+    fetch(`http://localhost:8081/api/shopping/${id}/purchase`, {
+      method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        householdId: item.household_id,
-        name: item.name,
-        purchased: newPurchased,
-        addedById: item.added_by,
-      }),
+      body: JSON.stringify({ price, purchaserId: user?.id }),
     })
       .then(async (res) => {
         const data = await res.json();
         if (!res.ok) {
-          throw new Error(data?.message || 'Failed to update shopping item');
+          throw new Error(data?.error || data?.message || 'Failed to record purchase');
         }
         setShopping((prev) =>
-          prev.map((s) => (s.id === id ? { ...s, purchased: newPurchased } : s))
+          prev.map((s) => (s.id === id ? { ...s, purchased: data.purchased, purchase_price: data.purchasePrice } : s))
         );
       })
-      .catch((err) => console.error('Failed to toggle shopping item', err));
+      .catch((err) => window.alert(err.message));
   };
 
   return (

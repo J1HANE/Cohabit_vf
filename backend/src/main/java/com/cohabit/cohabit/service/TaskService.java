@@ -4,6 +4,7 @@ import com.cohabit.cohabit.entity.Task;
 import com.cohabit.cohabit.repository.TaskRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.security.access.AccessDeniedException;
 
 import java.util.List;
 import java.util.Optional;
@@ -50,8 +51,16 @@ public class TaskService {
         return saved;
     }
 
-    public Task updateTask(Long id, Task taskDetails) {
+    public Task updateTask(Long id, Task taskDetails, Long requestingUserId) {
         return taskRepository.findById(id).map(task -> {
+            boolean markingCompleted = "completed".equalsIgnoreCase(taskDetails.getStatus())
+                    && !"completed".equalsIgnoreCase(task.getStatus());
+            if (markingCompleted && (requestingUserId == null
+                    || task.getAssignedUserId() == null
+                    || !task.getAssignedUserId().equals(requestingUserId))) {
+                throw new AccessDeniedException("Only the assigned user can complete this task");
+            }
+
             task.setHouseholdId(taskDetails.getHouseholdId());
             task.setName(taskDetails.getName());
             task.setFrequencyDays(taskDetails.getFrequencyDays());

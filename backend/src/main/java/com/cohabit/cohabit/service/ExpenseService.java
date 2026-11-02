@@ -1,6 +1,8 @@
 package com.cohabit.cohabit.service;
 
 import com.cohabit.cohabit.entity.Expense;
+import com.cohabit.cohabit.entity.ExpenseShare;
+import com.cohabit.cohabit.entity.User;
 import com.cohabit.cohabit.repository.ExpenseRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -8,6 +10,11 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.ArrayList;
+import java.util.List;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.time.LocalDate;
 
 @Service
 public class ExpenseService {
@@ -75,6 +82,42 @@ public class ExpenseService {
         }
 
         return saved;
+    }
+
+    @Transactional
+    public Expense createShoppingExpense(Long householdId, Long payerId, String itemName, BigDecimal amount) {
+        List<User> members = userRepository.findByHouseholdId(householdId);
+        if (members.isEmpty() || members.stream().noneMatch(member -> member.getId().equals(payerId))) {
+            throw new IllegalArgumentException("The purchaser must belong to this household");
+        }
+
+        BigDecimal total = amount.setScale(2, RoundingMode.HALF_UP);
+        if (total.signum() <= 0) {
+            throw new IllegalArgumentException("Purchase price must be at least 0.01");
+        }
+        BigDecimal eachShare = total.divide(BigDecimal.valueOf(members.size()), 2, RoundingMode.DOWN);
+        BigDecimal remainder = total.subtract(eachShare.multiply(BigDecimal.valueOf(members.size())));
+        List<ExpenseShare> shares = new ArrayList<>();
+
+        for (int i = 0; i < members.size(); i++) {
+            User member = members.get(i);
+            BigDecimal memberShare = i == 0 ? eachShare.add(remainder) : eachShare;
+            ExpenseShare share = new ExpenseShare();
+            share.setUserId(member.getId());
+            share.setShareAmount(memberShare);
+            share.setPaidAmount(member.getId().equals(payerId) ? memberShare : BigDecimal.ZERO);
+            shares.add(share);
+        }
+
+        Expense expense = new Expense();
+        expense.setHouseholdId(householdId);
+        expense.setPayerId(payerId);
+        expense.setLabel("Shopping: " + itemName);
+        expense.setAmount(total);
+        expense.setExpenseDate(LocalDate.now());
+        expense.setEmoji("🛒");
+        expense.setShares(shares);
+        return createExpense(expense);
     }
 
     @Transactional

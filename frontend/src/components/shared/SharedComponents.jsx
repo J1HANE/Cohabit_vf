@@ -68,7 +68,7 @@ export function ExpenseCard({ expense, payer, onClick }) {
 }
 
 /* ── TaskCard ── */
-export function TaskCard({ task, assignee, onComplete, onReassign }) {
+export function TaskCard({ task, assignee, canComplete = false, onComplete, onReassign }) {
   const isOverdue = task.due_date && new Date(task.due_date) < new Date() && task.status !== 'completed';
   const isToday = task.due_date && new Date(task.due_date).toDateString() === new Date().toDateString();
 
@@ -76,8 +76,10 @@ export function TaskCard({ task, assignee, onComplete, onReassign }) {
     <div className={`task-card${task.status === 'completed' ? ' completed' : ''}`}>
       <button
         className={`task-check${task.status === 'completed' ? ' checked' : ''}`}
+        disabled={!canComplete}
         onClick={(e) => { e.stopPropagation(); onComplete && onComplete(task.id); }}
-        aria-label="Mark complete"
+        aria-label={canComplete ? 'Toggle task completion' : 'Only the assigned person can complete this task'}
+        title={canComplete ? 'Toggle task completion' : 'Only the assigned person can complete this task'}
       >
         {task.status === 'completed' ? '✓' : ''}
       </button>
@@ -116,14 +118,19 @@ export function ShoppingItem({ item, adder, onToggle, onDelete }) {
     <div className={`shopping-item${item.purchased ? ' purchased' : ''}`}>
       <button
         className={`shopping-check${item.purchased ? ' checked' : ''}`}
+        disabled={item.purchased}
         onClick={() => onToggle && onToggle(item.id)}
-        aria-label={item.purchased ? 'Mark unpurchased' : 'Mark purchased'}
+        aria-label={item.purchased ? 'Purchase recorded as an expense' : 'Mark purchased and record price'}
+        title={item.purchased ? 'Purchase recorded as an expense' : 'Mark purchased and record price'}
       >
         {item.purchased ? '✓' : ''}
       </button>
       <div className="shopping-item-info">
         <span className="shopping-item-name">{item.name}</span>
-        <span className="shopping-item-meta">Added by {adder?.name || 'Unknown'}</span>
+        <span className="shopping-item-meta">
+          Added by {adder?.name || 'Unknown'}
+          {item.purchased && item.purchase_price != null && ` · ${Number(item.purchase_price).toFixed(2)} MAD`}
+        </span>
       </div>
       <button
         className="shopping-delete"
