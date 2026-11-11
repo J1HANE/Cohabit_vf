@@ -1,0 +1,221 @@
+.household-listings {
+  min-height: 100vh;
+  padding: 0 clamp(1rem, 5vw, 5rem) 3rem;
+  background: radial-gradient(ellipse at top left, #192c32, #0a1118 60%);
+  color: #fff;
+}
+
+.listings-nav,
+.listings-heading,
+.listings-search,
+.listings-grid,
+.household-listings > p {
+  max-width: 1240px;
+  margin-inline: auto;
+}
+
+.listings-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  padding: 1.5rem 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.listings-nav .auth-logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin: 0;
+  color: inherit;
+  text-decoration: none;
+}
+
+.listings-nav .app-btn {
+  text-decoration: none;
+}
+
+.listings-heading {
+  margin-block: 2.5rem 1.5rem;
+}
+
+.listings-heading h1 {
+  margin: 0 0 0.5rem;
+  font-size: clamp(2rem, 5vw, 3.5rem);
+  line-height: 1.1;
+}
+
+.listings-heading p,
+.household-listings > p,
+.listing-fields p,
+.listing-fields label > span:last-child:not(.app-form-label) {
+  color: #b8c6cd;
+}
+
+.listings-search {
+  margin-block: 0 1.5rem;
+}
+
+.listings-search input {
+  max-width: 27rem;
+}
+
+.listings-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 19rem), 1fr));
+  gap: 1.25rem;
+}
+
+.listing-card {
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 1rem;
+  background: #132029;
+}
+
+.listing-gallery {
+  position: relative;
+  aspect-ratio: 16 / 10;
+  background: #21333d;
+}
+
+.listing-gallery img,
+.listing-preview img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.listing-photo-placeholder {
+  display: grid;
+  place-items: center;
+  height: 100%;
+  min-height: 5rem;
+  background: #21333d;
+  color: #e1ebed;
+  font-size: 0.85rem;
+}
+
+.listing-gallery-controls {
+  position: absolute;
+  right: 0.75rem;
+  bottom: 0.75rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.2rem 0.4rem;
+  border-radius: 2rem;
+  background: #0a1118;
+  font-size: 0.82rem;
+}
+
+.listing-gallery-controls button {
+  width: 2rem;
+  height: 2rem;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: inherit;
+  font-size: 1.4rem;
+  cursor: pointer;
+}
+
+.listing-gallery-controls button:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.listing-card-body {
+  padding: 1.25rem;
+}
+
+.listing-location,
+.listing-contact p {
+  margin: 0 0 0.4rem;
+  color: #bccbd0;
+  font-size: 0.88rem;
+}
+
+.listing-card h2 {
+  margin: 0 0 0.75rem;
+  overflow-wrap: anywhere;
+}
+
+.listing-facts,
+.listing-settings-heading,
+.listing-publish {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+}
+
+.listing-facts strong,
+.listing-contact a,
+.listing-settings a,
+.listing-success {
+  color: #a8d5c4;
+}
+
+.listing-contact {
+  display: grid;
+  gap: 0.25rem;
+  margin-top: 1rem;
+  padding-top: 0.8rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+  overflow-wrap: anywhere;
+}
+
+.listing-settings-heading {
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.listing-settings-heading .profile-section-title {
+  margin: 0;
+}
+
+.listing-fields {
+  display: grid;
+  gap: 1rem;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  min-inline-size: 0;
+}
+
+.listing-field-grid,
+.listing-previews {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 14rem), 1fr));
+  gap: 1rem;
+}
+
+.listing-previews {
+  grid-template-columns: repeat(auto-fill, minmax(7rem, 1fr));
+}
+
+.listing-preview img,
+.listing-preview .listing-photo-placeholder {
+  aspect-ratio: 4 / 3;
+  height: auto;
+  border-radius: 0.5rem;
+  margin-bottom: 0.4rem;
+}
+
+.listing-fields > .app-btn {
+  justify-self: start;
+}
+
+.listing-fields p {
+  margin: 0;
+  font-size: 0.88rem;
+}
+
+.listing-publish input {
+  accent-color: #a8d5c4;
+}

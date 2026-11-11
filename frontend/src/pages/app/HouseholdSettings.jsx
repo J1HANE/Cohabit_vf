@@ -9,6 +9,7 @@ import {
 import { useHousehold } from '../../context/HouseholdContext';
 import { useAuth } from '../../context/AuthContext';
 import { apiFetch } from '../../services/api';
+import ListingSettings from '../household/ListingSettings';
 import './HouseholdSettings.css';
 
 export default function HouseholdSettings() {
@@ -167,6 +168,8 @@ export default function HouseholdSettings() {
           </AppButton>
         </form> : <p>{displayedHouseholdName}</p>}
       </div>
+
+      {isHouseholdAdmin && <ListingSettings key={household.id} />}
 
       {/* Members */}
       <div className="app-card hs-card">

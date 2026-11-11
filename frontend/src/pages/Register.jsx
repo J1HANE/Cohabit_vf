@@ -29,7 +29,7 @@ export default function Register() {
       if (response.ok) {
         // Auto-login with the returned user data, then go set up a household
         login({ id: data.userId, name, email });
-        navigate('/household/create');
+        navigate('/household/join');
       } else {
         setError(data.error || 'Erreur lors de l\'inscription.');
       }

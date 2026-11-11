@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { useHousehold } from '../../context/HouseholdContext';
 import { useAuth } from '../../context/AuthContext';
 import './HouseholdOnboarding.css';
@@ -10,8 +10,11 @@ export default function HouseholdJoin() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const { setHouseholdData } = useHousehold();
-  const { user, updateUser } = useAuth();
+  const { user, updateUser, loading: loadingUser } = useAuth();
   const navigate = useNavigate();
+
+  if (loadingUser) return null;
+  if (!user) return <Navigate to="/login" replace />;
 
   const handleJoin = async (e) => {
     e.preventDefault();
@@ -77,6 +80,13 @@ export default function HouseholdJoin() {
             {loading ? 'Joining...' : 'Join household'}
           </button>
         </form>
+
+        <div className="onboarding-search">
+          <p>Vous cherchez un foyer qui recrute ?</p>
+          <Link to="/household/search" className="app-btn app-btn-ghost app-btn-md">
+            Chercher une colocation
+          </Link>
+        </div>
 
         <div className="auth-footer" style={{ marginTop: '1.5rem' }}>
           <p>Want to create a new household? <Link to="/household/create">Create one</Link></p>
