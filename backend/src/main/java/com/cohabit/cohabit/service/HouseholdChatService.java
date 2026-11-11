@@ -25,6 +25,7 @@ public class HouseholdChatService {
 
     public record Room(long householdId, String householdName, String lastMessage, int unread) {}
     public record Message(long id, Long senderId, String senderName, String body, Instant sentAt) {}
+    public record Member(long id, String name, String color, boolean administrator) {}
 
     @Transactional(readOnly = true)
     public Optional<Room> room(long actorId) {
@@ -41,6 +42,18 @@ public class HouseholdChatService {
                 """ + ACTIVE_MEMBER,
                 (rs, row) -> new Room(rs.getLong(1), rs.getString(2), rs.getString(3), rs.getInt(4)),
                 actorId).stream().findFirst();
+    }
+
+    @Transactional(readOnly = true)
+    public List<Member> members(long householdId, long actorId) {
+        requireMember(householdId, actorId, false);
+        return jdbc.query("""
+                SELECT u.id, u.name, u.color, u.id = h.administrator_id AS is_administrator
+                """ + MEMBERSHIP + """
+                WHERE h.id = ? AND u.suspended = FALSE
+                ORDER BY is_administrator DESC, u.name, u.id
+                """, (rs, row) -> new Member(rs.getLong("id"), rs.getString("name"),
+                rs.getString("color"), rs.getBoolean("is_administrator")), householdId);
     }
 
     @Transactional(readOnly = true)

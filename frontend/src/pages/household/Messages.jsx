@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, Navigate, useParams } from 'react-router-dom';
-import { AppButton } from '../../components/shared/SharedComponents';
+import { AppButton, HouseholdMemberAvatar } from '../../components/shared/SharedComponents';
 import { useAuth } from '../../context/AuthContext';
 import { apiFetch } from '../../services/api';
 import './Messages.css';
@@ -32,6 +32,47 @@ function poll(refresh) {
   };
 }
 
+function GroupInfo({ endpoint, name, userId }) {
+  const [members, setMembers] = useState(null);
+  const [error, setError] = useState(false);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    readJson(`${endpoint}/members`, controller.signal)
+      .then((list) => {
+        if (!controller.signal.aborted) setMembers(list);
+      })
+      .catch(() => {
+        if (!controller.signal.aborted) setError(true);
+      });
+    return () => controller.abort();
+  }, [endpoint]);
+
+  return (
+    <section id="chat-group-info" className="chat-group-info" aria-label="Infos du groupe">
+      <h3>{name}</h3>
+      {error && <p role="alert">Impossible de charger les membres du foyer.</p>}
+      {!members && !error && <p role="status">Chargement des membres…</p>}
+      {members && (
+        <>
+          <p>{members.length} {members.length === 1 ? 'membre' : 'membres'}</p>
+          <ul className="chat-group-members">
+            {members.map((member) => (
+              <li key={member.id}>
+                <HouseholdMemberAvatar member={member} size="sm" />
+                <div>
+                  <strong>{member.name}{member.id === userId && ' (vous)'}</strong>
+                  <small>{member.administrator ? 'Responsable du foyer' : 'Membre'}</small>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
+    </section>
+  );
+}
+
 function Thread({ endpoint, userId, conversation, group }) {
   const [messages, setMessages] = useState(null);
   const [hasOlder, setHasOlder] = useState(false);
@@ -40,6 +81,7 @@ function Thread({ endpoint, userId, conversation, group }) {
   const [sending, setSending] = useState(false);
   const [loadError, setLoadError] = useState('');
   const [actionError, setActionError] = useState('');
+  const [showGroupInfo, setShowGroupInfo] = useState(false);
   const newest = useRef(null);
   const unreadThrough = useRef(0);
   const markedThrough = useRef(0);
@@ -116,10 +158,20 @@ function Thread({ endpoint, userId, conversation, group }) {
 
   return (
     <section className="chat-thread" aria-label="Conversation">
-      <header>
-        <h2>{group ? 'Chat du foyer' : conversation?.otherName || 'Conversation'}</h2>
-        {conversation && <p>{conversation.householdName}</p>}
+      <header className="chat-thread-header">
+        <div>
+          <h2>{group ? 'Chat du foyer' : conversation?.otherName || 'Conversation'}</h2>
+          {conversation && <p>{conversation.householdName}</p>}
+        </div>
+        {group && (
+          <button type="button" className="app-btn app-btn-ghost app-btn-sm"
+            aria-expanded={showGroupInfo} aria-controls={showGroupInfo ? 'chat-group-info' : undefined}
+            onClick={() => setShowGroupInfo((open) => !open)}>
+            {showGroupInfo ? 'Fermer les infos' : 'Infos du groupe'}
+          </button>
+        )}
       </header>
+      {showGroupInfo && <GroupInfo endpoint={endpoint} name={conversation.householdName} userId={userId} />}
       {loadError && <p role="alert" className="form-error">{loadError}</p>}
       <div className="chat-history" ref={pane} onScroll={(event) => {
         const element = event.currentTarget;

@@ -64,6 +64,12 @@ public class ConversationController {
                 .orElseGet(() -> ResponseEntity.noContent().build());
     }
 
+    @GetMapping("/household/{householdId}/members")
+    public List<HouseholdChatService.Member> householdMembers(@PathVariable long householdId,
+            @AuthenticationPrincipal User actor) {
+        return householdChat.members(householdId, actor.getId());
+    }
+
     @GetMapping("/household/{householdId}/messages")
     public List<HouseholdChatService.Message> householdHistory(@PathVariable long householdId,
             @RequestParam(required = false) Long before, @RequestParam(required = false) Long after,
