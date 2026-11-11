@@ -86,6 +86,7 @@ export default function HouseholdJoin() {
           <Link to="/household/search" className="app-btn app-btn-ghost app-btn-md">
             Chercher une colocation
           </Link>
+          <Link to="/messages">Mes messages</Link>
         </div>
 
         <div className="auth-footer" style={{ marginTop: '1.5rem' }}>

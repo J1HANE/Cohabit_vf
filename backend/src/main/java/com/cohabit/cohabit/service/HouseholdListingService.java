@@ -26,11 +26,12 @@ public class HouseholdListingService {
     private static final int MAX_PHOTOS = 5;
     private static final int MAX_PHOTO_BYTES = 2 * 1024 * 1024;
     private static final String LISTING_QUERY = """
-            SELECT h.id, h.name, u.name AS administrator_name, l.location, l.monthly_rent, l.bedrooms,
-                   l.contact_email, l.contact_phone, l.published, l.contact_user_id = u.id AS owns_contact
+            SELECT h.id, h.name, u.name AS administrator_name, u.id AS administrator_id,
+                   l.location, l.monthly_rent, l.bedrooms, l.contact_email, l.contact_phone, l.published,
+                   l.hide_contact, l.contact_user_id = u.id AS owns_contact
             FROM households h JOIN users u ON u.id = h.administrator_id
             """;
-    private static final String VISIBLE = """
+    static final String VISIBLE = """
             h.suspended = FALSE AND u.suspended = FALSE AND u.household_id = h.id
             AND l.published = TRUE AND l.contact_user_id = u.id
             """;
@@ -47,24 +48,24 @@ public class HouseholdListingService {
             @Min(1) Integer bedrooms,
             @Size(max = 254) @Email String contactEmail,
             @Size(max = 32) @Pattern(regexp = "[+0-9 ()-]*") String contactPhone,
-            boolean published, @Size(max = MAX_PHOTOS) List<Long> photoIds) {}
+            boolean published, boolean hideContact, @Size(max = MAX_PHOTOS) List<Long> photoIds) {}
 
-    public record Listing(Long householdId, String name, String administratorName, String location,
+    public record Listing(Long householdId, String name, String administratorName, long administratorId, String location,
                           BigDecimal monthlyRent, Integer bedrooms, String contactEmail, String contactPhone,
-                          boolean published, List<Long> photoIds) {}
+                          boolean published, boolean hideContact, List<Long> photoIds) {}
 
     public record Photo(String contentType, byte[] content) {}
 
     @Transactional(readOnly = true)
     public List<Listing> browse() {
-        return listings("JOIN household_listings l ON l.household_id = h.id WHERE " + VISIBLE
+        return listings(false, "JOIN household_listings l ON l.household_id = h.id WHERE " + VISIBLE
                 + " ORDER BY h.name, h.id");
     }
 
     @Transactional(readOnly = true)
     public Listing getSettings(User actor) {
         requireAdministrator(actor, false);
-        return listings("LEFT JOIN household_listings l ON l.household_id = h.id WHERE h.id = ?", actor.getHouseholdId())
+        return listings(true, "LEFT JOIN household_listings l ON l.household_id = h.id WHERE h.id = ?", actor.getHouseholdId())
                 .stream().findFirst().orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
     }
 
@@ -89,17 +90,17 @@ public class HouseholdListingService {
             throw new IllegalArgumentException("Saisissez un numéro de téléphone valide.");
         }
         if (details.published() && (location == null || details.monthlyRent() == null || details.bedrooms() == null
-                || (email == null && phone == null) || (retained.isEmpty() && photos.isEmpty()))) {
-            throw new IllegalArgumentException("Ajoutez la localisation, le loyer, le nombre de chambres, un contact et au moins une photo.");
+                || (retained.isEmpty() && photos.isEmpty()))) {
+            throw new IllegalArgumentException("Ajoutez la localisation, le loyer, le nombre de chambres et au moins une photo.");
         }
 
         jdbc.update("INSERT INTO household_listings (household_id) VALUES (?) ON DUPLICATE KEY UPDATE household_id = household_id",
                 householdId);
         jdbc.update("""
                 UPDATE household_listings SET location = ?, monthly_rent = ?, bedrooms = ?, contact_email = ?,
-                    contact_phone = ?, published = ?, contact_user_id = ? WHERE household_id = ?
+                    contact_phone = ?, published = ?, hide_contact = ?, contact_user_id = ? WHERE household_id = ?
                 """, location, details.monthlyRent(), details.bedrooms(), email, phone, details.published(),
-                actor.getId(), householdId);
+                details.hideContact(), actor.getId(), householdId);
         for (Long id : existing) {
             if (!retained.contains(id)) jdbc.update("DELETE FROM household_listing_photos WHERE id = ?", id);
         }
@@ -124,14 +125,16 @@ public class HouseholdListingService {
                 .stream().findFirst().orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
     }
 
-    private List<Listing> listings(String clause, Object... parameters) {
+    private List<Listing> listings(boolean settings, String clause, Object... parameters) {
         return jdbc.query(LISTING_QUERY + clause, (rs, row) -> {
             Long id = rs.getLong("id");
             boolean ownsContact = rs.getBoolean("owns_contact");
-            return new Listing(id, rs.getString("name"), rs.getString("administrator_name"),
+            boolean hidden = rs.getBoolean("hide_contact");
+            boolean showContact = ownsContact && (settings || !hidden);
+            return new Listing(id, rs.getString("name"), rs.getString("administrator_name"), rs.getLong("administrator_id"),
                     rs.getString("location"), rs.getBigDecimal("monthly_rent"), rs.getObject("bedrooms", Integer.class),
-                    ownsContact ? rs.getString("contact_email") : null, ownsContact ? rs.getString("contact_phone") : null,
-                    ownsContact && rs.getBoolean("published"), photoIds(id));
+                    showContact ? rs.getString("contact_email") : null, showContact ? rs.getString("contact_phone") : null,
+                    ownsContact && rs.getBoolean("published"), hidden, photoIds(id));
         }, parameters);
     }
 

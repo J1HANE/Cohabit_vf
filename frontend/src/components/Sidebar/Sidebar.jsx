@@ -13,6 +13,7 @@ const navItems = [
   { to: '/tasks', icon: '🧹', label: 'Tasks' },
   { to: '/shopping', icon: '🛒', label: 'Shopping' },
   { to: '/household/search', icon: '🔎', label: 'Colocations' },
+  { to: '/messages', icon: '✉️', label: 'Messages' },
   { to: '/complaints', icon: '⚑', label: 'Réclamations' },
 ];
 

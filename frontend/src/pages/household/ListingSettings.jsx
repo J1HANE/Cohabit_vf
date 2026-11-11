@@ -64,6 +64,7 @@ export default function ListingSettings() {
       contactEmail: form.contactEmail?.trim(),
       contactPhone: form.contactPhone?.trim(),
       published: form.published,
+      hideContact: form.hideContact,
       photoIds: form.photoIds,
     })], { type: 'application/json' }));
     newPhotos.forEach(({ file }) => payload.append('photos', file));
@@ -103,7 +104,12 @@ export default function ListingSettings() {
                 </label>
               ))}
             </div>
-            <p>Contact affiché sous le nom de {form.administratorName}. Indiquez au moins un moyen de contact à partager avec les personnes connectées.</p>
+            <p>Les personnes intéressées pourront vous écrire dans la messagerie Cohabit.</p>
+            <label className="listing-publish">
+              <input type="checkbox" checked={form.hideContact}
+                onChange={(event) => setForm({ ...form, hideContact: event.target.checked })} />
+              Masquer mon e-mail et mon numéro sur l’annonce
+            </label>
             <label className="app-form-group">
               <span className="app-form-label">Photos du foyer</span>
               <input className="app-form-input" type="file" accept="image/jpeg,image/png" multiple onChange={addPhotos} />

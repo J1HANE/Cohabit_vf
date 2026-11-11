@@ -24,6 +24,7 @@ import Complaints from './pages/Complaints';
 import HouseholdCreate from './pages/household/HouseholdCreate';
 import HouseholdJoin from './pages/household/HouseholdJoin';
 import HouseholdListings from './pages/household/HouseholdListings';
+import Messages from './pages/household/Messages';
 import AdminLogin from './pages/admin/AdminLogin';
 import AdminLayout from './pages/admin/AdminLayout';
 import AdminDashboard from './pages/admin/AdminDashboard';
@@ -65,6 +66,7 @@ function App() {
             <Route path="/household/create" element={<HouseholdCreate />} />
             <Route path="/household/join" element={<HouseholdJoin />} />
             <Route path="/household/search" element={<HouseholdListings />} />
+            <Route path="/messages/:id?" element={<Messages />} />
 
             {/* Protected app routes */}
             <Route path="/" element={<AppLayout />}>
