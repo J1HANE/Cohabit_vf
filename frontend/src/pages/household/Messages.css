@@ -39,7 +39,8 @@
 }
 
 .messages-inbox > p,
-.messages-empty {
+.messages-empty,
+.messages-room-status {
   padding: 1rem;
   color: #b8c6cd;
 }
@@ -133,6 +134,13 @@
 .chat-bubbles time {
   color: #d2dfdf;
   font-size: 0.7rem;
+}
+
+.chat-sender {
+  display: block;
+  color: #c2e9df;
+  font-size: 0.82rem;
+  overflow-wrap: anywhere;
 }
 
 .chat-compose {

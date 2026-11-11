@@ -12,6 +12,7 @@ const dateFormat = new Intl.DateTimeFormat('fr', { dateStyle: 'short', timeStyle
 
 async function readJson(url, signal) {
   const response = await apiFetch(url, { signal, cache: 'no-store' });
+  if (response.status === 204) return null;
   if (!response.ok) throw new Error();
   return response.json();
 }
@@ -31,7 +32,7 @@ function poll(refresh) {
   };
 }
 
-function Thread({ id, userId, conversation }) {
+function Thread({ endpoint, userId, conversation, group }) {
   const [messages, setMessages] = useState(null);
   const [hasOlder, setHasOlder] = useState(false);
   const [loadingOlder, setLoadingOlder] = useState(false);
@@ -45,7 +46,7 @@ function Thread({ id, userId, conversation }) {
   const pane = useRef(null);
   const followLatest = useRef(true);
   const [refresh, setRefresh] = useState(0);
-  const url = `${API}/${id}/messages`;
+  const url = `${endpoint}/messages`;
 
   useEffect(() => poll(async (signal) => {
     try {
@@ -57,20 +58,20 @@ function Thread({ id, userId, conversation }) {
       if (initial || ordered.length > 0) {
         newest.current = ordered.at(-1)?.id ?? 0;
         for (const message of ordered) {
-          if (message.senderId !== userId) unreadThrough.current = message.id;
+          if (group || message.senderId !== userId) unreadThrough.current = message.id;
         }
         setMessages((previous) => [...(previous || []), ...ordered]);
       }
       setLoadError('');
       if (document.visibilityState === 'visible' && unreadThrough.current > markedThrough.current) {
         const through = unreadThrough.current;
-        const response = await apiFetch(`${API}/${id}/read/${through}`, { method: 'PUT', signal });
+        const response = await apiFetch(`${endpoint}/read/${through}`, { method: 'PUT', signal });
         if (response.ok) markedThrough.current = through;
       }
     } catch {
       if (!signal.aborted) setLoadError('Impossible d’actualiser la conversation.');
     }
-  }), [id, refresh, url, userId]);
+  }), [endpoint, group, refresh, url, userId]);
 
   useEffect(() => {
     if (pane.current && followLatest.current) pane.current.scrollTop = pane.current.scrollHeight;
@@ -116,7 +117,7 @@ function Thread({ id, userId, conversation }) {
   return (
     <section className="chat-thread" aria-label="Conversation">
       <header>
-        <h2>{conversation?.otherName || 'Conversation'}</h2>
+        <h2>{group ? 'Chat du foyer' : conversation?.otherName || 'Conversation'}</h2>
         {conversation && <p>{conversation.householdName}</p>}
       </header>
       {loadError && <p role="alert" className="form-error">{loadError}</p>}
@@ -126,10 +127,11 @@ function Thread({ id, userId, conversation }) {
       }}>
         {hasOlder && <AppButton variant="ghost" size="sm" onClick={loadOlder} disabled={loadingOlder}>Messages précédents</AppButton>}
         {!messages && !loadError && <p role="status">Chargement…</p>}
-        {messages?.length === 0 && <p>Envoyez un premier message pour vous présenter.</p>}
+        {messages?.length === 0 && <p>Envoyez le premier message.</p>}
         <ol className="chat-bubbles" aria-label="Historique des messages">
           {messages?.map((message) => (
             <li key={message.id} className={message.senderId === userId ? 'chat-mine' : ''}>
+              {group && <strong className="chat-sender">{message.senderId === userId ? 'Vous' : message.senderName}</strong>}
               <p>{message.body}</p>
               <time dateTime={message.sentAt}>{dateFormat.format(new Date(message.sentAt))}</time>
             </li>
@@ -148,31 +150,50 @@ function Thread({ id, userId, conversation }) {
   );
 }
 
+function InboxItem({ to, title, conversation, selected, fallback }) {
+  return (
+    <Link to={to} aria-current={selected ? 'page' : undefined} className="messages-inbox-item">
+      <span>
+        <strong>{title}</strong>
+        {conversation.unread > 0 && (
+          <span className="messages-unread" aria-label={`${conversation.unread} non lus`}>{conversation.unread}</span>
+        )}
+      </span>
+      <small>{conversation.householdName}</small>
+      <span className="messages-preview">{conversation.lastMessage || fallback}</span>
+    </Link>
+  );
+}
+
 export default function Messages() {
   const { user, loading } = useAuth();
   const { id } = useParams();
   const [inbox, setInbox] = useState(null);
+  const [room, setRoom] = useState(undefined);
   const [error, setError] = useState(false);
+  const [roomError, setRoomError] = useState(false);
   const userId = Number(user?.id);
 
   useEffect(() => {
     if (!userId) return;
     return poll(async (signal) => {
-      try {
-        const conversations = await readJson(API, signal);
-        if (!signal.aborted) {
-          setInbox(conversations);
-          setError(false);
-        }
-      } catch {
-        if (!signal.aborted) setError(true);
-      }
+      const [inboxResult, roomResult] = await Promise.allSettled([
+        readJson(API, signal),
+        readJson(`${API}/household`, signal),
+      ]);
+      if (signal.aborted) return;
+      setError(inboxResult.status === 'rejected');
+      setRoomError(roomResult.status === 'rejected');
+      if (inboxResult.status === 'fulfilled') setInbox(inboxResult.value);
+      if (roomResult.status === 'fulfilled') setRoom(roomResult.value);
     });
   }, [userId]);
 
   if (loading) return null;
   if (!user) return <Navigate to="/login" replace />;
-  const selected = inbox?.find((conversation) => String(conversation.id) === id);
+  const group = id === 'foyer';
+  const selected = group ? room : inbox?.find((conversation) => String(conversation.id) === id);
+  const endpoint = group ? `${API}/household/${room?.householdId}` : `${API}/${id}`;
 
   return (
     <main className="messages-page">
@@ -186,23 +207,29 @@ export default function Messages() {
       <div className={`messages-layout${id ? ' messages-layout-open' : ''}`}>
         <aside className="messages-inbox" aria-label="Boîte de réception">
           {error && <p role="alert">Impossible d’actualiser la boîte de réception.</p>}
+          {roomError && <p role="alert">Impossible d’actualiser le chat du foyer.</p>}
           {!inbox && !error && <p role="status">Chargement…</p>}
-          {inbox?.length === 0 && <p>Vos conversations apparaîtront ici.</p>}
+          {inbox?.length === 0 && room === null && <p>Vos conversations apparaîtront ici.</p>}
+          {room && <InboxItem to="/messages/foyer" title="Chat du foyer" conversation={room}
+            selected={group} fallback="Commencer la discussion" />}
           {inbox?.map((conversation) => (
-            <Link key={conversation.id} to={`/messages/${conversation.id}`}
-              aria-current={conversation.id === selected?.id ? 'page' : undefined} className="messages-inbox-item">
-              <span><strong>{conversation.otherName}</strong>
-                {conversation.unread > 0 && <span className="messages-unread" aria-label={`${conversation.unread} non lus`}>{conversation.unread}</span>}
-              </span>
-              <small>{conversation.householdName}</small>
-              <span className="messages-preview">{conversation.lastMessage || 'Nouvelle conversation'}</span>
-            </Link>
+            <InboxItem key={conversation.id} to={`/messages/${conversation.id}`} title={conversation.otherName}
+              conversation={conversation} selected={!group && conversation.id === selected?.id}
+              fallback="Nouvelle conversation" />
           ))}
         </aside>
         {id ? (
           <div className="messages-active">
             <Link className="messages-back" to="/messages">← Boîte de réception</Link>
-            <Thread key={`${userId}/${id}`} id={id} userId={userId} conversation={selected} />
+            {group && !room ? (
+              <p className="messages-room-status" role="status">
+                {roomError ? 'Impossible de charger le chat du foyer.' : room === null
+                  ? 'Ce salon est réservé aux membres du foyer.' : 'Chargement du chat du foyer…'}
+              </p>
+            ) : (
+              <Thread key={`${userId}/${endpoint}`} endpoint={endpoint} userId={userId}
+                conversation={selected} group={group} />
+            )}
           </div>
         ) : <p className="messages-empty">Sélectionnez une conversation ou contactez un foyer depuis une annonce.</p>}
       </div>
