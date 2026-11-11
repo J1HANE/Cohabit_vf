@@ -9,6 +9,7 @@ import {
 import { useHousehold } from '../../context/HouseholdContext';
 import { useAuth } from '../../context/AuthContext';
 import { apiFetch } from '../../services/api';
+import { EXPENSE_CATEGORIES, getExpenseCategory } from './expenseCategories';
 import './ExpenseDetail.css';
 
 export default function ExpenseDetail() {
@@ -216,7 +217,7 @@ export default function ExpenseDetail() {
             </AppButton>
             {isCreator && <>
               <AppButton variant="ghost" size="md" onClick={() => navigate(`/expenses/${id}/edit`)}>
-                Modifier
+                Edit
               </AppButton>
               <AppButton variant="danger" size="md" onClick={handleDelete} disabled={deleting}>
                 {deleting ? 'Deleting...' : 'Delete'}
@@ -238,6 +239,7 @@ export default function ExpenseDetail() {
           <div className="expense-detail-emoji">{expense.emoji || '💸'}</div>
           <div>
             <h2 className="expense-detail-label">{expense.label}</h2>
+            <p className="expense-detail-date">{EXPENSE_CATEGORIES[getExpenseCategory(expense.category)]}</p>
             <p className="expense-detail-date">
               {expense.expense_date &&
                 new Date(expense.expense_date).toLocaleDateString('en-GB', {

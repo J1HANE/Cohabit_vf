@@ -34,6 +34,7 @@ export default function AdminLayout() {
           <NavLink to="/admin/users">Users</NavLink>
           <NavLink to="/admin/households">Households</NavLink>
           <NavLink to="/admin/complaints">Complaints</NavLink>
+          <NavLink to="/admin/email-campaigns">Email Campaigns</NavLink>
           <NavLink to="/admin/statistics">Statistics</NavLink>
         </nav>
         <div className="admin-sidebar-footer">

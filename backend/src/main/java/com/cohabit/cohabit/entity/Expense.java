@@ -3,6 +3,8 @@ package com.cohabit.cohabit.entity;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -11,6 +13,10 @@ import java.math.BigDecimal;
 @Entity
 @Table(name = "expenses")
 public class Expense {
+
+    public enum Category {
+        UNCATEGORIZED, GROCERIES, UTILITIES, RENT, HOUSEHOLD, TRANSPORT, OTHER
+    }
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -33,6 +39,11 @@ public class Expense {
 
     @NotBlank(message = "Label is mandatory")
     private String label;
+
+    @Enumerated(EnumType.STRING)
+    @JdbcTypeCode(SqlTypes.VARCHAR)
+    @Column(nullable = false, length = 24)
+    private Category category;
 
     private BigDecimal amount;
 
@@ -93,6 +104,9 @@ public class Expense {
 
     public String getLabel() { return label; }
     public void setLabel(String label) { this.label = label; }
+
+    public Category getCategory() { return category; }
+    public void setCategory(Category category) { this.category = category; }
 
     public BigDecimal getAmount() { return amount; }
     public void setAmount(BigDecimal amount) { this.amount = amount; }

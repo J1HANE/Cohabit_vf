@@ -40,6 +40,7 @@ public class TaskService {
         User creator = requireMember(task.getHouseholdId(), actorId);
         User assignee = task.getAssignedUserId() == null ? null : requireMember(task.getHouseholdId(), task.getAssignedUserId());
         task.setStatus("PENDING");
+        task.setCreatedById(actorId);
         Task saved = taskRepository.save(task);
 
         try {

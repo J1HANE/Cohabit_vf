@@ -1,11 +1,10 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState } from 'react';
 import './SpinWheel.css';
 
 const SpinWheel = ({ members, onClose, onSelect }) => {
   const [isSpinning, setIsSpinning] = useState(false);
   const [rotation, setRotation] = useState(0);
   const [selectedMember, setSelectedMember] = useState(null);
-  const wheelRef = useRef(null);
 
   const spinWheel = () => {
     if (isSpinning || members.length === 0) return;
@@ -75,18 +74,6 @@ const SpinWheel = ({ members, onClose, onSelect }) => {
     return `${colors[index % colors.length]} ${startAngle * 100}% ${endAngle * 100}%`;
   }).join(', ');
 
-  // Calculate text position for each segment
-  const getTextPosition = (index) => {
-    const angle = (index * segmentAngle + segmentAngle / 2) * (Math.PI / 180);
-    const radius = 95; // Distance from center (adjusted for better positioning)
-    const x = 50 + radius * Math.cos(angle - Math.PI / 2);
-    const y = 50 + radius * Math.sin(angle - Math.PI / 2);
-    return { x, y };
-  };
-
-  // Dynamic font size based on number of members
-  const fontSize = members.length > 8 ? '11px' : members.length > 5 ? '13px' : '14px';
-
   return (
     <div className="spinwheel-overlay">
       <div className="spinwheel-modal">
@@ -99,7 +86,6 @@ const SpinWheel = ({ members, onClose, onSelect }) => {
           <div className="wheel-container">
             <div className="wheel-pointer">▼</div>
             <div
-              ref={wheelRef}
               className="wheel"
               style={{
                 background: `conic-gradient(${gradientStops})`,
@@ -108,9 +94,9 @@ const SpinWheel = ({ members, onClose, onSelect }) => {
               }}
             >
               {/* Segment dividers */}
-              {members.map((_, index) => (
+              {members.length > 1 && members.map((member, index) => (
                 <div
-                  key={`divider-${index}`}
+                  key={`divider-${member.id}`}
                   className="wheel-divider"
                   style={{
                     transform: `rotate(${index * segmentAngle}deg)`
@@ -120,22 +106,25 @@ const SpinWheel = ({ members, onClose, onSelect }) => {
 
               <div className="wheel-center"></div>
               {members.map((member, index) => {
-                const pos = getTextPosition(index);
-                const textRotation = index * segmentAngle + segmentAngle / 2 + 90;
+                const angle = members.length === 1 ? 0 : (index + 0.5) * segmentAngle - 90;
+                const radians = angle * Math.PI / 180;
+                // Position labels between the hub and rim, along each slice's centerline.
+                const labelRadius = 29;
+                const textRotation = angle > 90 ? angle - 180 : angle;
                 return (
-                  <div
+                  <span
                     key={member.id}
-                    className="wheel-segment"
+                    className="wheel-segment-text"
+                    title={member.name}
                     style={{
-                      left: `${pos.x}%`,
-                      top: `${pos.y}%`,
-                      transform: `translate(-50%, -50%) rotate(${textRotation}deg)`
+                      left: `${50 + labelRadius * Math.cos(radians)}%`,
+                      top: `${50 + labelRadius * Math.sin(radians)}%`,
+                      transform: `translate(-50%, -50%) rotate(${textRotation}deg)`,
+                      fontSize: members.length > 8 ? '0.7rem' : undefined,
                     }}
                   >
-                    <span className="wheel-segment-text" style={{ fontSize }}>
-                      {member.name}
-                    </span>
-                  </div>
+                    {member.name}
+                  </span>
                 );
               })}
             </div>

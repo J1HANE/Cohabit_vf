@@ -79,6 +79,7 @@ public class ShoppingItemService {
         expense.setHouseholdId(item.getHouseholdId());
         expense.setPayerId(purchaser.getId());
         expense.setLabel("Achat : " + item.getName());
+        expense.setCategory(Expense.Category.GROCERIES);
         expense.setAmount(normalizedPrice);
         expense.setExpenseDate(LocalDate.now());
         expense.setEmoji("🛒");

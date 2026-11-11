@@ -40,7 +40,7 @@ export function SummaryCard({ icon, label, value, sub, accent, onClick }) {
 }
 
 /* ── ExpenseCard ── */
-export function ExpenseCard({ expense, payer, onClick }) {
+export function ExpenseCard({ expense, payer, onClick, onEdit, details }) {
   const hasAttachment = Boolean(expense?.attachment_url || expense?.attachmentUrl);
 
   return (
@@ -61,14 +61,23 @@ export function ExpenseCard({ expense, payer, onClick }) {
             day: 'numeric', month: 'short',
           })}
         </span>
+        {details && <span className="expense-card-meta">{details}</span>}
       </div>
       <span className="expense-card-amount">{expense.amount} MAD</span>
+      {onEdit && (
+        <AppButton variant="ghost" size="sm" onClick={(event) => {
+          event.stopPropagation();
+          onEdit(expense);
+        }}>
+          Edit
+        </AppButton>
+      )}
     </div>
   );
 }
 
 /* ── TaskCard ── */
-export function TaskCard({ task, assignee, onComplete, onReassign, canComplete = true }) {
+export function TaskCard({ task, assignee, onComplete, onReassign, onEdit, canComplete = true, canEdit = true }) {
   const isOverdue = task.due_date && new Date(task.due_date) < new Date() && task.status !== 'completed';
   const isToday = task.due_date && new Date(task.due_date).toDateString() === new Date().toDateString();
 
@@ -96,6 +105,11 @@ export function TaskCard({ task, assignee, onComplete, onReassign, canComplete =
           <span className="task-freq">
             Every {task.frequency_days === 1 ? 'day' : `${task.frequency_days} days`}
           </span>
+        )}
+        {onEdit && canEdit && (
+          <AppButton variant="ghost" size="sm" onClick={() => onEdit(task)}>
+            Edit
+          </AppButton>
         )}
         {onReassign && task.status !== 'completed' && (
           <button

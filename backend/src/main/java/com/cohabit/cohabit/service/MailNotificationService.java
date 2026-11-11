@@ -51,7 +51,7 @@ public class MailNotificationService {
         }
         try {
             MimeMessage email = mailSender.createMimeMessage();
-            MimeMessageHelper helper = new MimeMessageHelper(email, false, StandardCharsets.UTF_8.name());
+            MimeMessageHelper helper = new MimeMessageHelper(email, true, StandardCharsets.UTF_8.name());
             String subject = "CoHabit · " + title;
             helper.setFrom(senderAddress);
             helper.setTo(user.getEmail());

@@ -30,6 +30,8 @@ import AdminUsers from './pages/admin/AdminUsers';
 import AdminHouseholds from './pages/admin/AdminHouseholds';
 import AdminStatistics from './pages/admin/AdminStatistics';
 import AdminComplaints from './pages/admin/AdminComplaints';
+import AdminEmailCampaigns from './pages/admin/AdminEmailCampaigns';
+import AdminEmailCampaignForm from './pages/admin/AdminEmailCampaignForm';
 import './App.css';
 
 function App() {
@@ -53,6 +55,9 @@ function App() {
               <Route path="households" element={<AdminHouseholds />} />
               <Route path="complaints" element={<AdminComplaints />} />
               <Route path="statistics" element={<AdminStatistics />} />
+              <Route path="email-campaigns" element={<AdminEmailCampaigns />} />
+              <Route path="email-campaigns/new" element={<AdminEmailCampaignForm />} />
+              <Route path="email-campaigns/:id/edit" element={<AdminEmailCampaignForm />} />
             </Route>
 
             {/* Household onboarding */}
@@ -68,6 +73,7 @@ function App() {
               <Route path="expenses/:id" element={<ExpenseDetail />} />
               <Route path="tasks" element={<Tasks />} />
               <Route path="tasks/new" element={<TaskNew />} />
+              <Route path="tasks/:id/edit" element={<TaskNew />} />
               <Route path="balances" element={<Balances />} />
               <Route path="settlements" element={<Settlements />} />
               <Route path="settlements/new" element={<SettlementNew />} />

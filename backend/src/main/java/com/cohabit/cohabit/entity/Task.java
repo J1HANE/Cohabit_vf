@@ -43,6 +43,12 @@ public class Task {
     @Column(name = "last_completed_at")
     private LocalDateTime lastCompletedAt;
 
+    @Column(name = "created_by_id")
+    private Long createdById;
+
+    @Column(name = "created_at", insertable = false, updatable = false)
+    private LocalDateTime createdAt;
+
     public Task() {}
 
     public Long getId() { return id; }
@@ -97,4 +103,10 @@ public class Task {
 
     public LocalDateTime getLastCompletedAt() { return lastCompletedAt; }
     public void setLastCompletedAt(LocalDateTime lastCompletedAt) { this.lastCompletedAt = lastCompletedAt; }
+
+    public Long getCreatedById() { return createdById; }
+    public void setCreatedById(Long createdById) { this.createdById = createdById; }
+
+    public LocalDateTime getCreatedAt() { return createdAt; }
+    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
 }

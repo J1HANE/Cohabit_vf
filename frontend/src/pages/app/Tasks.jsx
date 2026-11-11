@@ -198,7 +198,9 @@ export default function Tasks() {
               task={task}
               assignee={getMemberById(task.assigned_user_id)}
               canComplete={Number(task.assigned_user_id) === Number(user?.id)}
+              canEdit={task.createdById == null || Number(task.createdById) === Number(user?.id)}
               onComplete={toggleTask}
+              onEdit={(task) => navigate(`/tasks/${task.id}/edit`)}
               onReassign={(task) => {
                 setTaskToReassign(task);
                 setShowSpinWheel(true);

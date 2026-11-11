@@ -48,6 +48,9 @@ public class ExpenseService {
     @Transactional
     public Expense createExpense(Expense expense, Long actorId) {
         validateExpense(expense);
+        if (expense.getCategory() == null) {
+            expense.setCategory(Expense.Category.UNCATEGORIZED);
+        }
         com.cohabit.cohabit.entity.User creator = requireHouseholdMember(expense.getHouseholdId(), actorId);
         expense.setCreatedBy(creator);
         requireHouseholdMember(expense.getHouseholdId(), expense.getPayerId());
@@ -171,6 +174,9 @@ public class ExpenseService {
 
         expense.setPayerId(expenseDetails.getPayerId());
         expense.setLabel(expenseDetails.getLabel());
+        if (expenseDetails.getCategory() != null) {
+            expense.setCategory(expenseDetails.getCategory());
+        }
         expense.setAmount(expenseDetails.getAmount());
         expense.setExpenseDate(expenseDetails.getExpenseDate());
         expense.setEmoji(expenseDetails.getEmoji());

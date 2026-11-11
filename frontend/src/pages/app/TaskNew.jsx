@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 import { PageHeader, AppButton } from '../../components/shared/SharedComponents';
 import { useAuth } from '../../context/AuthContext';
 import { useHousehold } from '../../context/HouseholdContext';
@@ -16,6 +16,7 @@ const FREQUENCIES = [
 
 export default function TaskNew() {
   const navigate = useNavigate();
+  const { id } = useParams();
   const { user } = useAuth();
   const { household, members } = useHousehold();
   const [form, setForm] = useState({
@@ -23,9 +24,32 @@ export default function TaskNew() {
     assigned_user_id: user?.id || '',
     frequency_days: 7,
     due_date: new Date().toISOString().split('T')[0],
+    rotationIndex: 0,
   });
   const [errors, setErrors] = useState({});
   const [showSpinWheel, setShowSpinWheel] = useState(false);
+  const [loadingTask, setLoadingTask] = useState(Boolean(id));
+  const [createdById, setCreatedById] = useState(null);
+
+  useEffect(() => {
+    if (!id) return;
+
+    apiFetch(`http://localhost:8081/api/tasks/${id}`)
+      .then(async (response) => {
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(data.error || 'Tâche introuvable.');
+        setForm({
+          name: data.name || '',
+          assigned_user_id: data.assignedUserId || '',
+          frequency_days: data.frequencyDays || 7,
+          due_date: data.dueDate || new Date().toISOString().slice(0, 10),
+          rotationIndex: data.rotationIndex,
+        });
+        setCreatedById(data.createdById);
+      })
+      .catch((loadError) => setErrors({ submit: loadError.message }))
+      .finally(() => setLoadingTask(false));
+  }, [id]);
 
   const validate = () => {
     const errs = {};
@@ -44,44 +68,53 @@ export default function TaskNew() {
       return;
     }
     
-    const newTask = {
+    const taskData = {
       name: form.name,
       householdId,
       frequencyDays: form.frequency_days,
       dueDate: form.due_date,
-      status: 'pending',
       assignedUserId: form.assigned_user_id,
-      rotationIndex: 0
+      rotationIndex: form.rotationIndex,
     };
 
-    apiFetch('http://localhost:8081/api/tasks', {
-      method: 'POST',
+    const url = id
+      ? `http://localhost:8081/api/tasks/${id}`
+      : 'http://localhost:8081/api/tasks';
+    const method = id ? 'PUT' : 'POST';
+
+    apiFetch(url, {
+      method,
       headers: {
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify(newTask)
+      body: JSON.stringify(taskData)
     })
     .then(res => {
       if (!res.ok) throw new Error('Server returned ' + res.status);
       return res.json();
     })
     .then(data => {
-      console.log('New task created:', data);
+      console.log(id ? 'Task updated:' : 'New task created:', data);
       navigate('/tasks');
     })
     .catch(err => {
-      console.error("Failed to create task", err);
-      setErrors({ submit: err.message || 'Failed to create task' });
+      console.error("Failed to save task", err);
+      setErrors({ submit: err.message || 'Failed to save task' });
     });
   };
+
+  if (loadingTask) return <div className="page-fade" style={{ padding: '2rem' }}>Chargement...</div>;
+  if (id && createdById != null && Number(createdById) !== Number(user?.id)) {
+    return <div className="page-fade"><PageHeader title="Accès refusé" /><p>Seul le créateur peut modifier cette tâche.</p></div>;
+  }
 
   return (
     <div className="page-fade">
       <PageHeader
-        title="Add Task"
-        subtitle="Assign a new household chore"
+        title={id ? 'Modifier la tâche' : 'Add Task'}
+        subtitle={id ? 'Mettre à jour les détails de cette tâche' : 'Assign a new household chore'}
         action={
-          <AppButton variant="ghost" size="md" onClick={() => navigate('/tasks')}>
+          <AppButton variant="ghost" size="md" onClick={() => navigate(id ? '/tasks' : '/tasks')}>
             Cancel
           </AppButton>
         }
@@ -152,7 +185,7 @@ export default function TaskNew() {
           {errors.submit && <div className="form-error" style={{ marginBottom: '1rem' }}>{errors.submit}</div>}
 
           <AppButton type="submit" variant="primary" size="lg" fullWidth>
-            Create task
+            {id ? 'Save changes' : 'Create task'}
           </AppButton>
         </form>
       </div>

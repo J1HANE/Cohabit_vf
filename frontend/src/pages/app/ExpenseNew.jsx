@@ -5,6 +5,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useHousehold } from '../../context/HouseholdContext';
 import { useNotifications } from '../../context/NotificationContext';
 import { apiFetch } from '../../services/api';
+import { EXPENSE_CATEGORIES, getExpenseCategory } from './expenseCategories';
 import './ExpenseNew.css';
 
 const EMOJIS = ['🛒', '🍕', '⚡', '📡', '🏠', '🚗', '💊', '🎉', '☕', '🍔', '💸'];
@@ -18,6 +19,7 @@ export default function ExpenseNew() {
 
   const [form, setForm] = useState({
     label: '',
+    category: 'UNCATEGORIZED',
     amount: '',
     payer_id: user?.id || '',
     expense_date: new Date().toISOString().split('T')[0],
@@ -44,6 +46,7 @@ export default function ExpenseNew() {
         if (!response.ok) throw new Error(data.error || 'Dépense introuvable.');
         setForm({
           label: data.label || '',
+          category: getExpenseCategory(data.category),
           amount: String(data.amount ?? ''),
           payer_id: data.payerId || '',
           expense_date: data.expenseDate || new Date().toISOString().slice(0, 10),
@@ -182,6 +185,7 @@ export default function ExpenseNew() {
         householdId,
         payerId: form.payer_id,
         label: form.label,
+        category: form.category,
         amount: parseFloat(form.amount),
         expenseDate: form.expense_date,
         emoji: form.emoji,
@@ -266,6 +270,20 @@ export default function ExpenseNew() {
               />
               {errors.label && <span className="form-error">{errors.label}</span>}
             </div>
+          </div>
+
+          <div className="app-form-group">
+            <label htmlFor="expense-category" className="app-form-label">Category</label>
+            <select
+              id="expense-category"
+              className="app-form-select"
+              value={form.category}
+              onChange={(e) => setForm((f) => ({ ...f, category: e.target.value }))}
+            >
+              {Object.entries(EXPENSE_CATEGORIES).map(([value, label]) => (
+                <option key={value} value={value}>{label}</option>
+              ))}
+            </select>
           </div>
 
           {/* Amount */}
@@ -424,7 +442,7 @@ export default function ExpenseNew() {
           {errors.submit && <div className="form-error" style={{ marginBottom: '1rem' }}>{errors.submit}</div>}
 
           <AppButton type="submit" variant="primary" size="lg" fullWidth disabled={submitting}>
-            {submitting ? 'Saving...' : 'Add expense'}
+            {submitting ? 'Saving...' : id ? 'Save changes' : 'Add expense'}
           </AppButton>
         </form>
       </div>

@@ -1,11 +1,13 @@
 package com.cohabit.cohabit.controller;
 
+import com.cohabit.cohabit.entity.EmailCampaign;
 import com.cohabit.cohabit.entity.Household;
 import com.cohabit.cohabit.entity.Complaint;
 import com.cohabit.cohabit.entity.User;
 import com.cohabit.cohabit.repository.ComplaintRepository;
 import com.cohabit.cohabit.repository.HouseholdRepository;
 import com.cohabit.cohabit.repository.UserRepository;
+import com.cohabit.cohabit.service.EmailCampaignService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -27,12 +29,14 @@ public class AdminController {
     private final UserRepository userRepository;
     private final HouseholdRepository householdRepository;
     private final ComplaintRepository complaintRepository;
+    private final EmailCampaignService emailCampaignService;
 
     @Autowired
-    public AdminController(UserRepository userRepository, HouseholdRepository householdRepository, ComplaintRepository complaintRepository) {
+    public AdminController(UserRepository userRepository, HouseholdRepository householdRepository, ComplaintRepository complaintRepository, EmailCampaignService emailCampaignService) {
         this.userRepository = userRepository;
         this.householdRepository = householdRepository;
         this.complaintRepository = complaintRepository;
+        this.emailCampaignService = emailCampaignService;
     }
 
     // ==================== USER MANAGEMENT ====================
@@ -221,6 +225,60 @@ public class AdminController {
         response.put("createdAt", complaint.getCreatedAt());
         response.put("updatedAt", complaint.getUpdatedAt());
         return response;
+    }
+
+    // ==================== EMAIL MARKETING ====================
+
+    @GetMapping("/email-campaigns")
+    public List<EmailCampaign> getAllEmailCampaigns() {
+        return emailCampaignService.getAllCampaigns();
+    }
+
+    @GetMapping("/email-campaigns/status/{status}")
+    public List<EmailCampaign> getEmailCampaignsByStatus(@PathVariable String status) {
+        return emailCampaignService.getCampaignsByStatus(status);
+    }
+
+    @GetMapping("/email-campaigns/{id}")
+    public ResponseEntity<EmailCampaign> getEmailCampaign(@PathVariable Long id) {
+        return ResponseEntity.of(emailCampaignService.getCampaign(id));
+    }
+
+    @PostMapping("/email-campaigns")
+    public ResponseEntity<?> createEmailCampaign(@RequestBody EmailCampaign campaign) {
+        try {
+            return ResponseEntity.ok(emailCampaignService.createCampaign(campaign));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    @PutMapping("/email-campaigns/{id}")
+    public ResponseEntity<?> updateEmailCampaign(@PathVariable Long id, @RequestBody EmailCampaign campaignDetails) {
+        try {
+            return ResponseEntity.ok(emailCampaignService.updateCampaign(id, campaignDetails));
+        } catch (IllegalStateException | IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    @PostMapping("/email-campaigns/{id}/send")
+    public ResponseEntity<?> sendEmailCampaign(@PathVariable Long id) {
+        try {
+            return ResponseEntity.ok(emailCampaignService.sendCampaign(id));
+        } catch (IllegalStateException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    @DeleteMapping("/email-campaigns/{id}")
+    public ResponseEntity<Void> deleteEmailCampaign(@PathVariable Long id) {
+        try {
+            emailCampaignService.deleteCampaign(id);
+            return ResponseEntity.noContent().build();
+        } catch (IllegalStateException e) {
+            return ResponseEntity.status(400).build();
+        }
     }
 
     // ==================== PLATFORM STATISTICS ====================

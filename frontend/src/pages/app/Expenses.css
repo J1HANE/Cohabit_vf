@@ -48,6 +48,73 @@
   gap: 0.5rem;
 }
 
+.expense-breakdown {
+  padding: 1.25rem;
+  margin-bottom: 1.5rem;
+}
+
+.expense-breakdown-header,
+.expense-breakdown-row,
+.expense-filter-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+}
+
+.expense-breakdown-header h2 {
+  margin: 0;
+  font-size: 1.05rem;
+}
+
+.expense-breakdown p,
+.expense-filter-summary {
+  margin: 0.4rem 0 0;
+  color: rgba(255, 255, 255, 0.65);
+  font-size: 0.85rem;
+}
+
+.expense-breakdown-list {
+  display: grid;
+  gap: 0.75rem;
+  padding: 0;
+  margin: 1rem 0 0;
+  list-style: none;
+}
+
+.expense-breakdown-row {
+  font-size: 0.9rem;
+}
+
+.expense-breakdown-track {
+  height: 0.4rem;
+  margin-top: 0.35rem;
+  border-radius: 1rem;
+  background: rgba(255, 255, 255, 0.09);
+  overflow: hidden;
+}
+
+.expense-breakdown-track > div {
+  height: 100%;
+  border-radius: inherit;
+  background: #a8d5c4;
+}
+
+.expense-filters {
+  margin-bottom: 1rem;
+}
+
+.expense-filter-fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 10rem), 1fr));
+  gap: 0.75rem;
+}
+
+.expense-filter-fields .app-form-group {
+  min-width: 0;
+}
+
 @media (max-width: 768px) {
   .expenses-summary-row {
     grid-template-columns: 1fr 1fr;
