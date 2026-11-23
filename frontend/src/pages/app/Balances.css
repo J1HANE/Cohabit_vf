@@ -97,6 +97,13 @@
   color: rgba(255, 255, 255, 0.3);
 }
 
+.debt-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-left: auto;
+}
+
 .balance-list {
   display: flex;
   flex-direction: column;

@@ -25,6 +25,10 @@ function getIcon(type) {
       return '💰';
     case 'TASK':
       return '🧹';
+    case 'PAYMENT_REQUEST':
+      return '💳';
+    case 'SETTLEMENT':
+      return '🤝';
     default:
       return '🔔';
   }

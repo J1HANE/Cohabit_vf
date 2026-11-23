@@ -125,7 +125,7 @@ export default function Balances() {
           <AppButton
             variant="ghost"
             size="sm"
-            onClick={() => navigate('/settlements/new')}
+            onClick={() => navigate(myBalance > 0 ? '/settlements/new?mode=request' : '/settlements/new?mode=pay')}
           >
             {myBalance < 0 ? 'Pay now' : 'Request'}
           </AppButton>
@@ -159,6 +159,26 @@ export default function Balances() {
                 <div className="debt-to">
                   <HouseholdMemberAvatar member={debt.to} size="sm" />
                   <span>{debt.to.name}</span>
+                </div>
+                <div className="debt-actions">
+                  {debt.to.id === currentUserId && (
+                    <AppButton
+                      variant="accent"
+                      size="sm"
+                      onClick={() => navigate(`/settlements/new?mode=request&target=${debt.from.id}&amount=${debt.amount}`)}
+                    >
+                      Request
+                    </AppButton>
+                  )}
+                  {debt.from.id === currentUserId && (
+                    <AppButton
+                      variant="primary"
+                      size="sm"
+                      onClick={() => navigate(`/settlements/new?mode=pay&target=${debt.to.id}&amount=${debt.amount}`)}
+                    >
+                      Pay
+                    </AppButton>
+                  )}
                 </div>
               </div>
             ))

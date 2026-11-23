@@ -60,7 +60,67 @@
 
 /* Form */
 .settlement-form-card {
-  max-width: 460px;
+  max-width: 480px;
+}
+
+.settlement-tabs {
+  display: flex;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  padding: 4px;
+  margin-bottom: 1.5rem;
+  gap: 4px;
+}
+
+.settlement-tab {
+  flex: 1;
+  padding: 0.65rem 0.75rem;
+  font-size: 0.88rem;
+  font-weight: 600;
+  border-radius: 9px;
+  border: none;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.6);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+}
+
+.settlement-tab:hover {
+  color: #fff;
+}
+
+.settlement-tab.active {
+  background: #2a3a34;
+  color: #a8d5c4;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+}
+
+.settlement-owed-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.4rem 0.75rem;
+  background: rgba(168, 213, 196, 0.12);
+  border: 1px solid rgba(168, 213, 196, 0.3);
+  border-radius: 8px;
+  font-size: 0.82rem;
+  color: #a8d5c4;
+  margin-top: 0.4rem;
+}
+
+.settlement-quick-fill-btn {
+  background: none;
+  border: none;
+  color: #ffd166;
+  text-decoration: underline;
+  cursor: pointer;
+  font-size: 0.82rem;
+  margin-left: 0.4rem;
+  padding: 0;
 }
 
 .settlement-arrow-label {

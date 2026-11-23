@@ -48,4 +48,20 @@ public class SettlementController {
             return ResponseEntity.badRequest().body(java.util.Map.of("error", e.getMessage()));
         }
     }
+
+    @PostMapping("/request")
+    public ResponseEntity<?> requestPayment(@RequestBody java.util.Map<String, Object> payload,
+                                            @AuthenticationPrincipal User actor) {
+        try {
+            Long toUserId = payload.get("toUserId") != null ? Long.valueOf(payload.get("toUserId").toString()) : null;
+            java.math.BigDecimal amount = payload.get("amount") != null ? new java.math.BigDecimal(payload.get("amount").toString()) : null;
+            String note = payload.get("note") != null ? payload.get("note").toString() : null;
+            settlementService.requestPayment(toUserId, amount, note, actor.getId());
+            return ResponseEntity.ok(java.util.Map.of("message", "Demande de remboursement envoyée avec succès"));
+        } catch (SecurityException e) {
+            return ResponseEntity.status(403).body(java.util.Map.of("error", e.getMessage()));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(java.util.Map.of("error", e.getMessage()));
+        }
+    }
 }
