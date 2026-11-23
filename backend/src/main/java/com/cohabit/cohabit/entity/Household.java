@@ -55,6 +55,7 @@ public class Household {
     public String getInviteCode() { return inviteCode; }
     public void setInviteCode(String inviteCode) { this.inviteCode = inviteCode; }
 
+    @JsonIgnore
     public User getAdministrator() { return administrator; }
     public void setAdministrator(User administrator) { this.administrator = administrator; }
     public Long getAdministratorId() { return administrator != null ? administrator.getId() : null; }
@@ -77,12 +78,15 @@ public class Household {
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
 
+    @JsonIgnore
     public List<User> getMembers() { return members; }
     public void setMembers(List<User> members) { this.members = members; }
 
+    @JsonIgnore
     public List<Expense> getExpenses() { return expenses; }
     public void setExpenses(List<Expense> expenses) { this.expenses = expenses; }
 
+    @JsonIgnore
     public List<Task> getTasks() { return tasks; }
     public void setTasks(List<Task> tasks) { this.tasks = tasks; }
 }

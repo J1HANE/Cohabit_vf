@@ -54,6 +54,7 @@ public class Task {
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
+    @JsonIgnore
     public Household getHousehold() { return household; }
     public void setHousehold(Household household) { this.household = household; }
 
@@ -82,6 +83,7 @@ public class Task {
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
 
+    @JsonIgnore
     public User getAssignedUser() { return assignedUser; }
     public void setAssignedUser(User assignedUser) { this.assignedUser = assignedUser; }
 

@@ -13,6 +13,8 @@ export default function Shopping() {
   const [purchaseItem, setPurchaseItem] = useState(null);
   const [price, setPrice] = useState('');
   const [error, setError] = useState('');
+  const [modalError, setModalError] = useState('');
+  const [purchasing, setPurchasing] = useState(false);
   const householdId = household?.id || user?.householdId;
 
   const loadItems = useCallback(async () => {
@@ -35,6 +37,7 @@ export default function Shopping() {
     setPurchaseItem(item);
     setPrice('');
     setError('');
+    setModalError('');
   };
 
   const deleteItem = async (id) => {
@@ -67,7 +70,9 @@ export default function Shopping() {
 
   const confirmPurchase = async (event) => {
     event.preventDefault();
-    if (!purchaseItem) return;
+    if (!purchaseItem || purchasing) return;
+    setPurchasing(true);
+    setModalError('');
     try {
       const response = await apiFetch(`http://localhost:8081/api/shopping/${purchaseItem.id}/purchase`, {
         method: 'POST',
@@ -78,9 +83,13 @@ export default function Shopping() {
       if (!response.ok) throw new Error(data.error || 'Impossible d’enregistrer cet achat.');
       setItems((prev) => prev.map((item) => item.id === data.id ? data : item));
       setPurchaseItem(null);
+      setPrice('');
       setError('');
+      setModalError('');
     } catch (purchaseError) {
-      setError(purchaseError.message);
+      setModalError(purchaseError.message);
+    } finally {
+      setPurchasing(false);
     }
   };
 
@@ -179,10 +188,17 @@ export default function Shopping() {
 
       <Modal
         isOpen={Boolean(purchaseItem)}
-        onClose={() => setPurchaseItem(null)}
+        onClose={() => {
+          if (!purchasing) {
+            setPurchaseItem(null);
+            setPrice('');
+            setModalError('');
+          }
+        }}
         title={`Acheter ${purchaseItem?.name || ''}`}
       >
         <form onSubmit={confirmPurchase} className="app-form">
+          {modalError && <p className="form-error" role="alert" style={{ marginBottom: '1rem' }}>{modalError}</p>}
           <div className="app-form-group">
             <label className="app-form-label" htmlFor="shopping-purchase-price">Prix payé (MAD)</label>
             <input
@@ -195,9 +211,12 @@ export default function Shopping() {
               onChange={(event) => setPrice(event.target.value)}
               required
               autoFocus
+              disabled={purchasing}
             />
           </div>
-          <AppButton type="submit" variant="primary" fullWidth>Confirmer l’achat</AppButton>
+          <AppButton type="submit" variant="primary" fullWidth disabled={purchasing}>
+            {purchasing ? 'Enregistrement en cours...' : 'Confirmer l’achat'}
+          </AppButton>
         </form>
       </Modal>
     </div>

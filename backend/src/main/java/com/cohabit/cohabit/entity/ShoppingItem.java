@@ -50,6 +50,7 @@ public class ShoppingItem {
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
+    @JsonIgnore
     public Household getHousehold() { return household; }
     public void setHousehold(Household household) { this.household = household; }
 
@@ -72,6 +73,7 @@ public class ShoppingItem {
     public Boolean getPurchased() { return purchased; }
     public void setPurchased(Boolean purchased) { this.purchased = purchased; }
 
+    @JsonIgnore
     public User getAddedBy() { return addedBy; }
     public void setAddedBy(User addedBy) { this.addedBy = addedBy; }
 
@@ -90,9 +92,13 @@ public class ShoppingItem {
 
     public BigDecimal getPurchasedPrice() { return purchasedPrice; }
     public void setPurchasedPrice(BigDecimal purchasedPrice) { this.purchasedPrice = purchasedPrice; }
+
+    @JsonIgnore
     public User getPurchasedBy() { return purchasedBy; }
     public void setPurchasedBy(User purchasedBy) { this.purchasedBy = purchasedBy; }
     public Long getPurchasedById() { return purchasedBy != null ? purchasedBy.getId() : null; }
+
+    @JsonIgnore
     public Expense getExpense() { return expense; }
     public void setExpense(Expense expense) { this.expense = expense; }
     public Long getExpenseId() { return expense != null ? expense.getId() : null; }

@@ -38,6 +38,7 @@ public class Settlement {
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
+    @JsonIgnore
     public Household getHousehold() { return household; }
     public void setHousehold(Household household) { this.household = household; }
 
@@ -54,6 +55,7 @@ public class Settlement {
         }
     }
 
+    @JsonIgnore
     public User getFromUser() { return fromUser; }
     public void setFromUser(User fromUser) { this.fromUser = fromUser; }
 
@@ -70,6 +72,7 @@ public class Settlement {
         }
     }
 
+    @JsonIgnore
     public User getToUser() { return toUser; }
     public void setToUser(User toUser) { this.toUser = toUser; }
 

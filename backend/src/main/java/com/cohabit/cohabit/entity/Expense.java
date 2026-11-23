@@ -66,6 +66,7 @@ public class Expense {
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
+    @JsonIgnore
     public Household getHousehold() { return household; }
     public void setHousehold(Household household) { this.household = household; }
 
@@ -82,6 +83,7 @@ public class Expense {
         }
     }
 
+    @JsonIgnore
     public User getPayer() { return payer; }
     public void setPayer(User payer) { this.payer = payer; }
 
@@ -98,6 +100,7 @@ public class Expense {
         }
     }
 
+    @JsonIgnore
     public User getCreatedBy() { return createdBy; }
     public void setCreatedBy(User createdBy) { this.createdBy = createdBy; }
     public Long getCreatedById() { return createdBy != null ? createdBy.getId() : null; }

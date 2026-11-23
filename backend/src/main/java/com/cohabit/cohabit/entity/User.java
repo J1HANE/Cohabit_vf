@@ -62,6 +62,7 @@ public class User {
     public LocalDateTime getSuspendedAt() { return suspendedAt; }
     public void setSuspendedAt(LocalDateTime suspendedAt) { this.suspendedAt = suspendedAt; }
 
+    @JsonIgnore
     public Household getHousehold() { return household; }
     public void setHousehold(Household household) { this.household = household; }
 
