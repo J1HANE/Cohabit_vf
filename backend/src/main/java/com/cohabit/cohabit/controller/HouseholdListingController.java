@@ -52,4 +52,18 @@ public class HouseholdListingController {
     public ResponseEntity<Map<String, String>> invalid(IllegalArgumentException exception) {
         return ResponseEntity.badRequest().body(Map.of("error", exception.getMessage()));
     }
+
+    @ExceptionHandler(org.springframework.web.bind.MethodArgumentNotValidException.class)
+    public ResponseEntity<Map<String, String>> invalidMethodArgument(org.springframework.web.bind.MethodArgumentNotValidException exception) {
+        String message = exception.getBindingResult().getFieldErrors().stream()
+                .map(error -> error.getField() + " : " + error.getDefaultMessage())
+                .collect(java.util.stream.Collectors.joining(", "));
+        return ResponseEntity.badRequest().body(Map.of("error", message.isEmpty() ? "Paramètres d’annonce invalides" : message));
+    }
+
+    @ExceptionHandler(org.springframework.web.server.ResponseStatusException.class)
+    public ResponseEntity<Map<String, String>> responseStatus(org.springframework.web.server.ResponseStatusException exception) {
+        String reason = exception.getReason() != null ? exception.getReason() : exception.getMessage();
+        return ResponseEntity.status(exception.getStatusCode()).body(Map.of("error", reason));
+    }
 }

@@ -19,7 +19,7 @@ export default function ListingPhoto({ photo, alt, lazy = false }) {
   }, [placeholder, visible]);
 
   useEffect(() => {
-    if (!visible) return;
+    if (!visible || !photo) return;
     const controller = new AbortController();
     let preview;
     async function load() {
@@ -44,6 +44,10 @@ export default function ListingPhoto({ photo, alt, lazy = false }) {
       if (preview) URL.revokeObjectURL(preview);
     };
   }, [photo, visible]);
+
+  if (!photo) {
+    return <div ref={setPlaceholder} className="listing-photo-placeholder">🏠 Aucune photo</div>;
+  }
 
   if (!url || failed) {
     return <div ref={setPlaceholder} className="listing-photo-placeholder">{failed ? 'Photo indisponible' : 'Chargement…'}</div>;

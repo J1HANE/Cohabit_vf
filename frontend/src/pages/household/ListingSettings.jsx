@@ -27,7 +27,14 @@ export default function ListingSettings() {
       .then(async (response) => {
         if (!response.ok) throw new Error();
         const data = await response.json();
-        if (!controller.signal.aborted) setForm(data);
+        if (!controller.signal.aborted) {
+          setForm({
+            ...data,
+            photoIds: data.photoIds || [],
+            published: Boolean(data.published),
+            hideContact: Boolean(data.hideContact),
+          });
+        }
       })
       .catch(() => {
         if (!controller.signal.aborted) setError('Impossible de charger les paramètres de l’annonce.');
@@ -40,8 +47,9 @@ export default function ListingSettings() {
     event.target.value = '';
     setError('');
     setMessage('');
-    if (files.length + newPhotos.length + form.photoIds.length > 5) {
-      setError('Vous pouvez ajouter jusqu’à cinq photos.');
+    const currentPhotoCount = (form?.photoIds?.length || 0) + newPhotos.length;
+    if (files.length + currentPhotoCount > 5) {
+      setError('Vous pouvez ajouter jusqu’à cinq photos au total.');
       return;
     }
     if (files.some((file) => file.size > 2 * 1024 * 1024 || !['image/jpeg', 'image/png'].includes(file.type))) {
@@ -53,19 +61,27 @@ export default function ListingSettings() {
 
   async function save(event) {
     event.preventDefault();
-    setSaving(true);
     setError('');
     setMessage('');
+
+    if (form.published) {
+      if (!form.location?.trim() || !form.monthlyRent || !form.bedrooms) {
+        setError('Veuillez renseigner la localisation, le loyer et le nombre de chambres pour publier l’annonce.');
+        return;
+      }
+    }
+
+    setSaving(true);
     const payload = new FormData();
     payload.append('details', new Blob([JSON.stringify({
-      location: form.location?.trim(),
-      monthlyRent: form.monthlyRent ? Number(form.monthlyRent) : null,
-      bedrooms: form.bedrooms ? Number(form.bedrooms) : null,
-      contactEmail: form.contactEmail?.trim(),
-      contactPhone: form.contactPhone?.trim(),
-      published: form.published,
-      hideContact: form.hideContact,
-      photoIds: form.photoIds,
+      location: form.location?.trim() || null,
+      monthlyRent: form.monthlyRent && !isNaN(Number(form.monthlyRent)) ? Number(form.monthlyRent) : null,
+      bedrooms: form.bedrooms && !isNaN(Number(form.bedrooms)) ? Number(form.bedrooms) : null,
+      contactEmail: form.contactEmail?.trim() || null,
+      contactPhone: form.contactPhone?.trim() || null,
+      published: Boolean(form.published),
+      hideContact: Boolean(form.hideContact),
+      photoIds: form.photoIds || [],
     })], { type: 'application/json' }));
     newPhotos.forEach(({ file }) => payload.append('photos', file));
 
@@ -73,11 +89,17 @@ export default function ListingSettings() {
       const response = await apiFetch(SETTINGS_URL, { method: 'PUT', body: payload });
       const data = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(data.error || 'Vérifiez les champs et les photos de votre annonce.');
-      setForm(data);
+      setForm({
+        ...data,
+        photoIds: data.photoIds || [],
+        published: Boolean(data.published),
+        hideContact: Boolean(data.hideContact),
+      });
       setNewPhotos([]);
-      setMessage(data.published ? 'Annonce publiée.' : 'Annonce enregistrée hors ligne.');
+      setMessage(data.published ? '✓ Annonce publiée avec succès !' : '✓ Annonce enregistrée hors ligne avec succès !');
+      setTimeout(() => setMessage(''), 4000);
     } catch (err) {
-      setError(err.message);
+      setError(err.message || 'Une erreur est survenue lors de l’enregistrement.');
     } finally {
       setSaving(false);
     }
@@ -116,11 +138,11 @@ export default function ListingSettings() {
               <span>Jusqu’à cinq photos JPEG ou PNG de 2 Mo chacune. La première sert de couverture.</span>
             </label>
             <div className="listing-previews">
-              {form.photoIds.map((id, index) => (
+              {(form.photoIds || []).map((id, index) => (
                 <div key={id} className="listing-preview">
                   <ListingPhoto photo={id} alt={`Photo ${index + 1} du foyer`} />
                   <AppButton size="sm" variant="ghost" onClick={() => setForm({
-                    ...form, photoIds: form.photoIds.filter((photoId) => photoId !== id),
+                    ...form, photoIds: (form.photoIds || []).filter((photoId) => photoId !== id),
                   })}>Retirer</AppButton>
                 </div>
               ))}
@@ -134,11 +156,15 @@ export default function ListingSettings() {
               ))}
             </div>
             <label className="listing-publish">
-              <input type="checkbox" checked={form.published}
+              <input type="checkbox" checked={Boolean(form.published)}
                 onChange={(event) => setForm({ ...form, published: event.target.checked })} />
               Rechercher des colocataires et afficher l’annonce
             </label>
-            <AppButton type="submit" disabled={saving}>{saving ? 'Enregistrement…' : 'Enregistrer l’annonce'}</AppButton>
+            {error && <p className="form-error" role="alert" style={{ marginTop: '0.5rem', marginBottom: '0.5rem' }}>{error}</p>}
+            {message && <p className="listing-success" role="status" style={{ marginTop: '0.5rem', marginBottom: '0.5rem' }}>{message}</p>}
+            <AppButton type="submit" variant="primary" disabled={saving}>
+              {saving ? 'Enregistrement en cours…' : 'Enregistrer l’annonce'}
+            </AppButton>
           </fieldset>
         </form>
       )}

@@ -89,9 +89,8 @@ public class HouseholdListingService {
         if (phone != null && phone.chars().filter(Character::isDigit).count() < 6) {
             throw new IllegalArgumentException("Saisissez un numéro de téléphone valide.");
         }
-        if (details.published() && (location == null || details.monthlyRent() == null || details.bedrooms() == null
-                || (retained.isEmpty() && photos.isEmpty()))) {
-            throw new IllegalArgumentException("Ajoutez la localisation, le loyer, le nombre de chambres et au moins une photo.");
+        if (details.published() && (location == null || details.monthlyRent() == null || details.bedrooms() == null)) {
+            throw new IllegalArgumentException("Ajoutez la localisation, le loyer et le nombre de chambres pour publier l’annonce.");
         }
 
         jdbc.update("INSERT INTO household_listings (household_id) VALUES (?) ON DUPLICATE KEY UPDATE household_id = household_id",
