@@ -12,6 +12,7 @@ const navItems = [
   { to: '/balances', icon: '⚖️', label: 'Balances' },
   { to: '/tasks', icon: '🧹', label: 'Tasks' },
   { to: '/shopping', icon: '🛒', label: 'Shopping' },
+  { to: '/marketplace', icon: '🏷️', label: 'Marketplace' },
   { to: '/household/search', icon: '🔎', label: 'Colocations' },
   { to: '/messages', icon: '✉️', label: 'Messages' },
   { to: '/complaints', icon: '⚑', label: 'Réclamations' },

@@ -41,6 +41,51 @@ public class ConversationService {
                 """, Long.class, householdId, actorId, ownerId);
     }
 
+    @Transactional
+    public long openForMarketplace(long itemId, long actorId) {
+        var items = jdbc.queryForList("""
+                SELECT m.household_id, m.seller_id, m.title, m.price, u.household_id AS user_household_id
+                FROM marketplace_items m
+                JOIN users u ON u.id = m.seller_id
+                WHERE m.id = ? AND u.suspended = FALSE
+                """, itemId);
+        if (items.isEmpty()) throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Article introuvable");
+        var row = items.get(0);
+        Long householdId = (Long) row.get("household_id");
+        if (householdId == null) {
+            householdId = (Long) row.get("user_household_id");
+        }
+        long sellerId = ((Number) row.get("seller_id")).longValue();
+        String title = (String) row.get("title");
+        java.math.BigDecimal price = (java.math.BigDecimal) row.get("price");
+
+        if (sellerId == actorId) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Vous ne pouvez pas vous contacter vous-même");
+        }
+
+        if (householdId == null) {
+            Long actorHousehold = jdbc.queryForObject("SELECT household_id FROM users WHERE id = ?", Long.class, actorId);
+            householdId = actorHousehold != null ? actorHousehold : 1L;
+        }
+
+        jdbc.update("""
+                INSERT INTO conversations (household_id, seeker_id, owner_id) VALUES (?, ?, ?)
+                ON DUPLICATE KEY UPDATE id = id
+                """, householdId, actorId, sellerId);
+        long convId = jdbc.queryForObject("""
+                SELECT id FROM conversations WHERE household_id = ? AND seeker_id = ? AND owner_id = ?
+                """, Long.class, householdId, actorId, sellerId);
+
+        Integer count = jdbc.queryForObject("SELECT COUNT(*) FROM conversation_messages WHERE conversation_id = ?", Integer.class, convId);
+        if (count == null || count == 0) {
+            String initialMessage = "Bonjour ! Je suis intéressé(e) par votre article sur le Marketplace : \"" + title + "\" (" + price + " MAD). Est-il toujours disponible ?";
+            jdbc.update("INSERT INTO conversation_messages (conversation_id, sender_id, body) VALUES (?, ?, ?)",
+                    convId, actorId, initialMessage);
+        }
+
+        return convId;
+    }
+
     @Transactional(readOnly = true)
     public List<Conversation> inbox(long actorId) {
         return jdbc.query("""

@@ -33,6 +33,11 @@ public class ConversationController {
         return new Opened(service.open(householdId, actor.getId()));
     }
 
+    @PostMapping("/marketplace/{itemId}")
+    public Opened openForMarketplace(@PathVariable long itemId, @AuthenticationPrincipal User actor) {
+        return new Opened(service.openForMarketplace(itemId, actor.getId()));
+    }
+
     @GetMapping
     public List<ConversationService.Conversation> inbox(@AuthenticationPrincipal User actor) {
         return service.inbox(actor.getId());

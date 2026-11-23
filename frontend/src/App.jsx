@@ -17,6 +17,7 @@ import Balances from './pages/app/Balances';
 import Settlements from './pages/app/Settlements';
 import SettlementNew from './pages/app/SettlementNew';
 import Shopping from './pages/app/Shopping';
+import Marketplace from './pages/app/Marketplace';
 import Profile from './pages/app/Profile';
 import HouseholdSettings from './pages/app/HouseholdSettings';
 import Notifications from './pages/app/Notifications';
@@ -82,6 +83,7 @@ function App() {
               <Route path="settlements" element={<Settlements />} />
               <Route path="settlements/new" element={<SettlementNew />} />
               <Route path="shopping" element={<Shopping />} />
+              <Route path="marketplace" element={<Marketplace />} />
               <Route path="profile" element={<Profile />} />
               <Route path="household/settings" element={<HouseholdSettings />} />
               <Route path="notifications" element={<Notifications />} />
