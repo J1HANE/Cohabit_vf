@@ -1,6 +1,7 @@
 .sidebar {
   width: 240px;
-  min-height: 100vh;
+  height: 100vh;
+  max-height: 100dvh;
   background: #080f16;
   border-right: 1px solid rgba(255, 255, 255, 0.07);
   display: flex;
@@ -10,6 +11,27 @@
   top: 0;
   flex-shrink: 0;
   transition: width 0.3s ease;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+}
+
+.sidebar::-webkit-scrollbar {
+  width: 5px;
+}
+
+.sidebar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.sidebar::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 4px;
+}
+
+.sidebar::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
 }
 
 .sidebar-logo {
@@ -18,6 +40,7 @@
   gap: 0.6rem;
   padding: 0.5rem 0.75rem;
   margin-bottom: 1.5rem;
+  flex-shrink: 0;
 }
 
 .sidebar-logo-icon {
@@ -44,6 +67,7 @@
   border-radius: 12px;
   padding: 0.65rem 0.75rem;
   margin-bottom: 1.5rem;
+  flex-shrink: 0;
 }
 
 .household-icon {
@@ -69,7 +93,7 @@
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
-  flex: 1;
+  flex: 1 0 auto;
 }
 
 .sidebar-nav-item {
@@ -133,6 +157,7 @@
   border-top: 1px solid rgba(255, 255, 255, 0.07);
   padding-top: 1rem;
   margin-top: 1rem;
+  flex-shrink: 0;
 }
 
 .avatar-mini {
